@@ -1,0 +1,14 @@
+/* 70-collections.css — галерея смарт-подборок. */
+.sf-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: var(--sf-gutter-lg); align-items: start; }
+.sf-preset { display: flex; flex-direction: column; gap: 10px; padding: var(--sf-pad-lg); background: var(--sf-surface); border: 1px solid var(--sf-border); border-radius: var(--sf-r-lg); transition: all 0.18s; }
+.sf-preset:hover { border-color: var(--sf-border-hover); box-shadow: var(--sf-glow); }
+.sf-preset__head { display: flex; align-items: center; gap: 12px; }
+.sf-preset__icon { width: 36px; height: 36px; border-radius: var(--sf-r); background: var(--sf-primary-soft); color: var(--sf-primary); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.sf-preset__titles { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.sf-preset__titles h3 { font-size: 15px; font-weight: 600; }
+.sf-preset__count { font-family: var(--sf-font-mono); font-size: 11px; color: var(--sf-text-3); }
+.sf-preset__tools { display: flex; gap: 4px; align-items: center; }
+.sf-preset__desc { font-size: 12.5px; color: var(--sf-text-2); }
+.sf-preset__rules { display: flex; flex-wrap: wrap; gap: 6px; }
+.sf-preset__preview { display: flex; flex-direction: column; gap: 6px; }
+.sf-preset__foot { display: flex; align-items: center; gap: 8px; padding-top: 4px; }

@@ -1,0 +1,7 @@
+/* 90-custom.css — ваши личные переопределения (файл подключается последним).
+   Пример: .sf-root { --sf-primary: #0ea5e9; }  .sf-card { border-radius: 14px; } */
+
+/* Примеры (раскомментируйте нужное):
+   .sf-root { --sf-card-r: 1.25rem; --sf-card-r-inner: 0.75rem; }   радиус карточек и вложенных блоков
+   .sf-root { --sf-bento-media-max: 240px; }                        ниже одиночные фото в bento
+*/

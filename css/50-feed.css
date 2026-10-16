@@ -1,0 +1,40 @@
+/* 50-feed.css — раскладки ленты: masonry / flow / timeline / bento. */
+.sf-feed-region { min-width: 0; }
+.sf-feed { display: flex; flex-direction: column; gap: var(--sf-gutter-lg); align-items: stretch; }
+.sf-loadmore { align-self: center; }
+
+.sf-feed--masonry .sf-feed__grid { column-count: 3; column-gap: var(--sf-gutter-lg); }
+.sf-feed--masonry .sf-card { break-inside: avoid; margin-bottom: var(--sf-gutter-lg); }
+
+.sf-feed--flow .sf-feed__grid { display: flex; flex-direction: column; gap: var(--sf-gutter); max-width: 720px; width: 100%; margin: 0 auto; }
+
+/* Timeline — узкая центрированная колонка: подпись дня (150px) + карточки не шире 680px, даже в режиме «на всю ширину» */
+.sf-feed--timeline { align-items: center; }
+.sf-timeline__group { display: grid; grid-template-columns: 150px minmax(0, 680px); gap: var(--sf-gutter); width: 100%; max-width: 860px; justify-content: center; }
+.sf-timeline__label { position: sticky; top: 8px; align-self: start; display: flex; flex-direction: column; gap: 2px; padding-left: 18px; font-family: var(--sf-font-head); font-weight: 600; color: var(--sf-text); }
+.sf-timeline__dot { position: absolute; left: 0; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--sf-primary); box-shadow: 0 0 0 4px var(--sf-primary-soft); }
+.sf-timeline__key { font-family: var(--sf-font-mono); font-size: 10.5px; font-weight: 400; color: var(--sf-text-3); }
+.sf-timeline__items { display: flex; flex-direction: column; gap: var(--sf-gutter); border-left: 1px solid var(--sf-border); padding-left: var(--sf-gutter); margin-left: -4px; }
+
+/* Bento: акцентные карточки (видео/canvas — на 2 колонки). По умолчанию карточка занимает ровно свою высоту:
+   align-items: start не даёт ей растягиваться до самой высокой соседки в ряду, а фото больше не занимает 2 ряда.
+   Классы заметки (cssclasses): sf-bento-stretch — вернуть равную высоту в ряду; sf-bento-tall — фото на 2 ряда. */
+.sf-feed--bento .sf-feed__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: dense; grid-auto-rows: auto; align-items: start; gap: var(--sf-gutter-lg); }
+.sf-feed--bento .sf-card { border-radius: var(--sf-card-r); }
+/* Защита от растяжения: и сама карточка, и любая обёртка-ячейка (прямой потомок сетки) не тянутся по высоте ряда,
+   даже если где-то задан height: 100% (в том числе инлайном из JS) */
+.sf-feed--bento .sf-feed__grid > * { align-self: start; height: auto; min-height: 0; }
+.sf-feed--bento .sf-card { align-self: start; height: auto !important; min-height: 0 !important; }
+.sf-feed--bento .sf-images--1 .sf-images__cell, .sf-feed--bento .sf-images--1 .sf-images__cell img { max-height: var(--sf-bento-media-max); }
+.sf-feed--bento .sf-card--video, .sf-feed--bento .sf-card--canvas { grid-column: span 2; }
+.sf-bento-tall .sf-feed--bento .sf-card--image { grid-row: span 2; }
+.sf-bento-stretch .sf-feed--bento .sf-feed__grid > *, .sf-bento-stretch .sf-feed--bento .sf-card { align-self: stretch; }
+.sf-bento-stretch .sf-feed--bento .sf-card { height: 100% !important; }
+
+/* sf-bento-masonry: bento без «дыр» под короткими карточками — колонки как в masonry, у каждой своя высота.
+   Платой уходят спаны (видео/canvas на 2 колонки): сетка не умеет плотно упаковывать карточки разной высоты. */
+.sf-bento-masonry .sf-feed--bento .sf-feed__grid { display: block; column-count: 3; column-gap: var(--sf-gutter-lg); }
+.sf-bento-masonry .sf-feed--bento .sf-feed__grid > * { break-inside: avoid; margin-bottom: var(--sf-gutter-lg); }
+.sf-bento-masonry .sf-feed--bento .sf-card { width: 100%; }
+.sf-feed--bento .sf-card--quote { background: linear-gradient(160deg, var(--sf-primary-soft), var(--sf-surface) 60%); }
+.sf-feed--bento .sf-card--audio { background: linear-gradient(160deg, var(--sf-tertiary-soft), var(--sf-surface) 60%); }

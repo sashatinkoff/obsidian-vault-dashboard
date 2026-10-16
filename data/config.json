@@ -1,0 +1,50 @@
+{
+  "sources": [
+    {
+      "id": "notes",
+      "label": "Заметки",
+      "folder": "notes",
+      "enabled": true
+    }
+  ],
+  "excludeFolders": [
+    "scripts",
+    ".obsidian",
+    "templates"
+  ],
+  "excludeTags": [],
+  "dateFields": [
+    "date",
+    "Date",
+    "created",
+    "дата",
+    "Дата"
+  ],
+  "favoriteField": "favorite",
+  "favoriteTags": [
+    "избранное",
+    "favorite"
+  ],
+  "quoteTags": [
+    "цитата",
+    "цитаты",
+    "quote",
+    "quotes"
+  ],
+  "theme": "auto",
+  "nav": true,
+  "defaultView": "stream",
+  "layout": "masonry",
+  "pageSize": 24,
+  "excerptChars": 420,
+  "randomCount": 12,
+  "insightsCount": 3,
+  "topTags": 24,
+  "concurrency": 8,
+  "deepScan": false,
+  "showSourceBadge": false,
+  "dql": {
+    "dateExpr": "file.cday"
+  },
+  "fullWidth": false
+}

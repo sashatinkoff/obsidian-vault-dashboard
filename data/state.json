@@ -1,0 +1,23 @@
+{
+  "default": {
+    "layout": "masonry",
+    "fullWidth": true,
+    "quick": "all",
+    "filter": {
+      "any": [
+        "россия"
+      ],
+      "all": [],
+      "not": [],
+      "attrs": [],
+      "types": [],
+      "sources": [],
+      "period": "1y",
+      "day": "",
+      "minBacklinks": 0,
+      "text": "",
+      "sort": "date-desc"
+    },
+    "collapsed": false
+  }
+}

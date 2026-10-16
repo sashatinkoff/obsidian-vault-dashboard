@@ -1,0 +1,31 @@
+/* 20-shell.css — навигация, тулбар, хлебные крошки, переключатель раскладок. */
+.sf-nav { display: flex; align-items: center; gap: var(--sf-gutter); padding-bottom: 4px; margin-bottom: var(--sf-gutter); flex-wrap: wrap; }
+.sf-nav__brand { display: inline-flex; align-items: center; gap: 8px; font-family: var(--sf-font-head); font-weight: 600; color: var(--sf-primary); letter-spacing: -0.02em; }
+/* Вкладки-«пилюли»: неактивные — тёмная плашка, активная — залитая акцентом со свечением */
+.sf-nav__tabs { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: none; flex: 1 1 auto; min-width: 0; }
+.sf-nav__tabs::-webkit-scrollbar { display: none; }
+.sf-nav__tab { display: inline-flex; align-items: center; gap: 8px; height: var(--sf-nav-h); padding: 0 var(--sf-nav-pad); border-radius: var(--sf-r-pill); background: var(--sf-surface-2); color: var(--sf-text-2); font-family: var(--sf-font-head); font-weight: 600; font-size: 14px; letter-spacing: -0.005em; white-space: nowrap; flex: none; transition: background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s; }
+.sf-nav__tab .sf-icon { opacity: 0.85; }
+.sf-nav__tab:hover { background: var(--sf-surface-3); color: var(--sf-text); }
+.sf-nav__tab:active { transform: scale(0.97); }
+.sf-nav__tab.is-active { background: var(--sf-primary-strong); color: var(--sf-primary-on); box-shadow: 0 4px 16px -4px var(--sf-primary-line); }
+.sf-nav__tab.is-active .sf-icon { opacity: 1; }
+.sf-nav__tab:focus-visible { outline: 2px solid var(--sf-primary); outline-offset: 2px; }
+.sf-nav__tab-count { font-family: var(--sf-font-mono); font-size: 11px; font-weight: 500; padding: 0 6px; border-radius: var(--sf-r-pill); background: var(--sf-primary-soft); color: var(--sf-primary); }
+.sf-nav__tab.is-active .sf-nav__tab-count { background: rgba(255, 255, 255, 0.2); color: var(--sf-primary-on); }
+/* Статус справа: «● 1 428 заметок · Синхронизировано» — без плашки, акцентная точка */
+.sf-nav .sf-counter { margin-left: auto; height: auto; padding: 0; background: transparent; font-size: 12px; letter-spacing: 0.04em; white-space: nowrap; }
+.sf-nav .sf-counter__dot { width: 8px; height: 8px; background: var(--sf-tertiary); }
+
+.sf-toolbar { display: flex; align-items: center; gap: var(--sf-gutter); flex-wrap: wrap; }
+.sf-toolbar__spacer { flex: 1; }
+.sf-crumbs { display: flex; align-items: center; gap: 6px; font-family: var(--sf-font-mono); font-size: 12px; color: var(--sf-text-2); }
+.sf-crumbs__sep { color: var(--sf-text-3); }
+.sf-crumbs__cur { color: var(--sf-primary); background: var(--sf-surface-2); padding: 1px 8px; border-radius: var(--sf-r-sm); font-weight: 600; }
+.sf-counter { display: inline-flex; align-items: center; gap: 8px; height: 24px; padding: 0 10px; border-radius: var(--sf-r-pill); background: var(--sf-surface-2); font-family: var(--sf-font-mono); font-size: 11px; color: var(--sf-text-2); }
+.sf-counter__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sf-primary); animation: sf-ping 2s infinite; }
+@keyframes sf-ping { 50% { opacity: 0.35; } }
+.sf-segmented { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--sf-r); background: var(--sf-surface); border: 1px solid var(--sf-border); }
+.sf-segmented__btn { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--sf-r-sm); color: var(--sf-text-2); font-family: var(--sf-font-mono); font-size: 11px; transition: all 0.15s; }
+.sf-segmented__btn:hover { color: var(--sf-text); background: var(--sf-surface-2); }
+.sf-segmented__btn.is-active { background: var(--sf-primary-strong); color: var(--sf-primary-on); }

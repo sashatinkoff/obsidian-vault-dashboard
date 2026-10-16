@@ -1,0 +1,30 @@
+/* 85-responsive.css — адаптивность: desktop ≥1280 · tablet 768–1279 · mobile <768. */
+@media (max-width: 1279px) {
+  .sf-feed--masonry .sf-feed__grid { column-count: 2; }
+  .sf-feed--bento .sf-feed__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sf-bento-masonry .sf-feed--bento .sf-feed__grid { column-count: 2; }
+  .sf-stats, .sf-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sf-insights { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sf-studio { grid-template-columns: 1fr; }
+  .sf-studio__side { position: static; }
+}
+@media (max-width: 767px) {
+  .sf-root { padding: 0.75rem; border-radius: var(--sf-r); }
+  .sf-feed--masonry .sf-feed__grid, .sf-bento-masonry .sf-feed--bento .sf-feed__grid { column-count: 1; }
+  .sf-feed--bento .sf-feed__grid, .sf-insights, .sf-stats, .sf-tiles { grid-template-columns: 1fr; }
+  .sf-feed--bento .sf-card--video, .sf-feed--bento .sf-card--canvas { grid-column: auto; }
+  .sf-feed--bento .sf-card--image, .sf-bento-tall .sf-feed--bento .sf-card--image { grid-row: auto; }
+  .sf-timeline__group { grid-template-columns: minmax(0, 1fr); max-width: none; }
+  .sf-timeline__label { position: static; }
+  .sf-hero h1 { font-size: 22px; line-height: 28px; }
+  .sf-panel { padding: 0.75rem; }
+  .sf-advanced .sf-field { min-width: 100%; }
+  .sf-nav__brand span { display: none; }
+  .sf-nav__tab { height: 40px; padding: 0 14px; }
+  .sf-nav .sf-counter { margin-left: 0; width: 100%; }
+  .sf-iconbtn { width: 36px; height: 36px; } /* крупные тап-мишени */
+  .sf-quick, .sf-btn { height: 38px; }
+  .sf-btn--sm { height: 30px; }
+  .sf-crumbs { display: none; }
+  .sf-stat__value { font-size: 28px; line-height: 34px; }
+}

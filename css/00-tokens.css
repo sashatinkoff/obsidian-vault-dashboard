@@ -1,0 +1,86 @@
+/* 00-tokens.css — дизайн-токены (DESIGN.md «Obsidian Stream»). Светлая тема — по умолчанию, тёмная — по теме Obsidian
+   или принудительно через config.theme = "dark". Все цвета/радиусы/шрифты берутся ТОЛЬКО отсюда. */
+.sf-root {
+  --sf-canvas: #f8f7f4;
+  --sf-surface: #ffffff;
+  --sf-surface-2: #f1efea;
+  --sf-surface-3: #e4e1da;
+  --sf-surface-hover: #fcfbf9;
+  --sf-border: #e4e1da;
+  --sf-border-hover: #cfc9be;
+  --sf-text: #1c1b1f;
+  --sf-text-2: #5f5b66;
+  --sf-text-3: #8a8691;
+  --sf-primary: #7c3aed;
+  --sf-primary-strong: #6d28d9;
+  --sf-primary-soft: rgba(124, 58, 237, 0.09);
+  --sf-primary-line: rgba(124, 58, 237, 0.3);
+  --sf-primary-on: #ffffff;
+  --sf-tertiary: #0284c7;
+  --sf-tertiary-soft: rgba(2, 132, 199, 0.1);
+  --sf-danger: #dc2626;
+  --sf-danger-soft: rgba(220, 38, 38, 0.1);
+  --sf-glow: 0 4px 20px -2px rgba(124, 58, 237, 0.16);
+  --sf-heat-0: #ece9e3;
+  --sf-heat-1: #ddd0f5;
+  --sf-heat-2: #bd9cf0;
+  --sf-heat-3: #9a63e8;
+  --sf-heat-4: #7c3aed;
+
+  --sf-r: 0.5rem;
+  --sf-r-sm: 0.375rem;
+  --sf-r-lg: 0.75rem;
+  --sf-r-pill: 9999px;
+  /* Карточки ленты: радиус внешний и вложенных блоков (картинки, цитаты, callout, ссылки) */
+  --sf-card-r: 1rem;
+  --sf-card-r-inner: 0.625rem;
+  /* Навигация-пилюли: высота и горизонтальный отступ вкладки */
+  --sf-nav-h: 36px;
+  --sf-nav-pad: 16px;
+  /* Потолок высоты одиночной картинки в bento */
+  --sf-bento-media-max: 320px;
+  --sf-gutter: 1rem;
+  --sf-gutter-lg: 1.5rem;
+  --sf-pad: 1rem;
+  --sf-pad-lg: 1.25rem;
+
+  --sf-font-head: "Geist", "Inter", var(--font-interface), system-ui, sans-serif;
+  --sf-font-body: "Inter", var(--font-text), system-ui, sans-serif;
+  --sf-font-mono: "JetBrains Mono", var(--font-monospace), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.sf-root[data-sf-theme="dark"],
+body.theme-dark .sf-root[data-sf-theme="auto"] {
+  --sf-canvas: #161618;
+  --sf-surface: #202024;
+  --sf-surface-2: #2c2c32;
+  --sf-surface-3: #35353d;
+  --sf-surface-hover: #26262b;
+  --sf-border: #35353d;
+  --sf-border-hover: #4f4f5a;
+  --sf-text: #f4f4f6;
+  --sf-text-2: #a1a1aa;
+  --sf-text-3: #71717a;
+  --sf-primary: #a855f7;
+  --sf-primary-strong: #7c3aed;
+  --sf-primary-soft: rgba(168, 85, 247, 0.1);
+  --sf-primary-line: rgba(168, 85, 247, 0.3);
+  --sf-primary-on: #ffffff;
+  --sf-tertiary: #38bdf8;
+  --sf-tertiary-soft: rgba(56, 189, 248, 0.12);
+  --sf-danger: #ffb4ab;
+  --sf-danger-soft: rgba(255, 180, 171, 0.12);
+  --sf-glow: 0 4px 20px -2px rgba(124, 58, 237, 0.12);
+  --sf-heat-0: #26262b;
+  --sf-heat-1: #3b2a5a;
+  --sf-heat-2: #5b2f9a;
+  --sf-heat-3: #7c3aed;
+  --sf-heat-4: #c084fc;
+}
+
+/* Пресеты оформления без правки JS: добавьте класс в frontmatter заметки, например
+   cssclasses: [sf-page, sf-radius-round]
+   sf-radius-sharp (8px) · sf-radius-soft (12px) · sf-radius-round (24px) */
+.sf-radius-sharp .sf-root { --sf-card-r: 0.5rem; --sf-card-r-inner: 0.375rem; }
+.sf-radius-soft .sf-root { --sf-card-r: 0.75rem; --sf-card-r-inner: 0.5rem; }
+.sf-radius-round .sf-root { --sf-card-r: 1.5rem; --sf-card-r-inner: 0.875rem; }
