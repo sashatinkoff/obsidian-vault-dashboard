@@ -1,7 +1,10 @@
 /* 70-collections.css — галерея смарт-подборок. */
 .sf-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: var(--sf-gutter-lg); align-items: start; }
 .sf-preset { display: flex; flex-direction: column; gap: 10px; padding: var(--sf-pad-lg); background: var(--sf-surface); border: 1px solid var(--sf-border); border-radius: var(--sf-r-lg); transition: all 0.18s; }
-.sf-preset:hover { border-color: var(--sf-border-hover); box-shadow: var(--sf-glow); }
+.sf-preset.is-clickable { cursor: pointer; }
+.sf-preset:hover { background: var(--sf-surface-hover); border-color: var(--sf-border-hover); box-shadow: var(--sf-glow); }
+.sf-preset__open { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--sf-primary); }
+.sf-preset:hover .sf-richlink { background: var(--sf-surface); }
 .sf-preset__head { display: flex; align-items: center; gap: 12px; }
 .sf-preset__icon { width: 36px; height: 36px; border-radius: var(--sf-r); background: var(--sf-primary-soft); color: var(--sf-primary); display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .sf-preset__titles { display: flex; flex-direction: column; flex: 1; min-width: 0; }

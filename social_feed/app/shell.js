@@ -3,12 +3,13 @@ const { h, clear } = require("lib/dom");
 const nav = require("ui/common/nav");
 const views = require("views");
 
-function mountShell(ctx, container) {
+async function mountShell(ctx, container) {
   const { store, config } = ctx;
   const root = h("div", { class: "sf-root", dataset: { sfTheme: config.theme, sfView: store.get().view } });
   const region = h("div", { class: "sf-view" });
   root.append(...(config.nav ? [nav(ctx)] : []), region);
   container.appendChild(root);
+  ctx.rootEl = root;
 
   // Полная ширина: класс на корне блока + класс на области заметки (снимает ограничение «читаемой длины строки»).
   const host = container.closest ? container.closest(".markdown-preview-view, .markdown-source-view, .view-content") : null;
@@ -38,6 +39,8 @@ function mountShell(ctx, container) {
   ctx.reload = show;
   ctx.toast = (text) => { const t = h("div", { class: "sf-toast" }, text); root.append(t); setTimeout(() => t.remove(), 2200); };
   store.subscribe(show, ["view"]);
-  return show();
+  await show();
+  // Вернулись в заметку — возвращаем прокрутку (карточки дорисовываются, поэтому восстановление с повторами).
+  if (ctx.restored) { const s = ctx.session.get(); if (s && s.scroll) ctx.scroll.restore(s.scroll); }
 }
 module.exports = { mountShell };

@@ -14,8 +14,8 @@ const predicates = {
   day: (p, f) => !f.day || dayKey(p.ts) === f.day,
   backlinks: (p, f) => p.backlinks >= (f.minBacklinks || 0),
   text: (p, f) => {
-    const q = (f.text || "").trim().toLowerCase();
-    return !q || p.search.includes(q) || (p.searchBody || "").includes(q);
+    const words = (f.text || "").trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return words.every((w) => p.search.includes(w) || (p.searchBody || "").includes(w));
   },
 };
 module.exports = { predicates, tagHit };

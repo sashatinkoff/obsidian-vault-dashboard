@@ -1,5 +1,4 @@
 // services/config.js — настройки: значения по умолчанию + data/config.json (если файла нет — создаётся).
-const { deepMerge } = require("lib/misc");
 
 const DEFAULTS = {
   // Источники заметок. folder "" = весь vault (кроме excludeFolders). Можно добавить несколько источников,
@@ -16,6 +15,8 @@ const DEFAULTS = {
   nav: true,                  // верхняя навигация между экранами
   defaultView: "stream",      // overview | stream | bento | collections | studio
   layout: "masonry",          // masonry | flow | timeline (для вида stream)
+  columns: { min: 2, max: 4 }, // колонки карточек на десктопе (masonry и бенто); на телефоне всегда 1
+  minCardWidth: 320,          // минимальная ширина карточки в px — по ней считается, сколько колонок помещается
   pageSize: 24,
   excerptChars: 420,
   randomCount: 12,
@@ -27,9 +28,4 @@ const DEFAULTS = {
   dql: { dateExpr: "file.cday" },
 };
 
-async function loadConfig(storage) {
-  const user = await storage.readJson("data/config.json", null);
-  if (user === null) await storage.writeJson("data/config.json", DEFAULTS);
-  return deepMerge(DEFAULTS, user || {});
-}
-module.exports = { DEFAULTS, loadConfig };
+module.exports = { DEFAULTS };

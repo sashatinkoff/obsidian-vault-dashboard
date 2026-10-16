@@ -1,6 +1,7 @@
 /* 40-card.css — карточка поста: шапка, тело, футер, вики-ссылки, действия. */
-.sf-card { display: flex; flex-direction: column; gap: 10px; padding: var(--sf-pad); background: var(--sf-surface); border: 1px solid var(--sf-border); border-radius: var(--sf-card-r); transition: background 0.18s, border-color 0.18s, box-shadow 0.18s; min-width: 0; }
+.sf-card { display: flex; flex-direction: column; gap: 10px; padding: var(--sf-pad); background: var(--sf-surface); border: 1px solid var(--sf-border); border-radius: var(--sf-r); transition: background 0.18s, border-color 0.18s, box-shadow 0.18s; min-width: 0; }
 .sf-card:hover { background: var(--sf-surface-hover); border-color: var(--sf-border-hover); box-shadow: var(--sf-glow); }
+.sf-card:hover .sf-chip:not(.is-active) { background: var(--sf-surface-3); }
 .sf-card--text, .sf-card--quote { padding: var(--sf-pad-lg); }
 .sf-card.is-pinned { border-color: var(--sf-primary-line); }
 .sf-card__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -12,13 +13,11 @@
 .sf-card__body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .sf-card__text { font-size: 14px; line-height: 22px; color: var(--sf-text); overflow-wrap: anywhere; }
 .sf-card__text > :first-child { margin-top: 0; } .sf-card__text > :last-child { margin-bottom: 0; }
-.sf-card__text img { max-width: 100%; border-radius: var(--sf-card-r-inner); }
-.sf-card__text .callout { border-radius: var(--sf-card-r-inner); overflow: hidden; }
-.sf-card__text blockquote { border-radius: 0 var(--sf-card-r-inner) var(--sf-card-r-inner) 0; }
+.sf-card__text img { max-width: 100%; border-radius: var(--sf-r-sm); }
 .sf-card__text a.internal-link, .sf-richlink a.internal-link { color: var(--sf-primary); background: var(--sf-primary-soft); border: 1px solid var(--sf-primary-line); font-family: var(--sf-font-mono); font-size: 0.92em; border-radius: 4px; padding: 1px 5px; text-decoration: none; transition: filter 0.15s; }
 .sf-card__text a.internal-link:hover { filter: brightness(1.2); }
 .sf-card__text a.external-link { color: var(--sf-tertiary); }
-.sf-card__text pre { background: var(--sf-canvas); border-radius: var(--sf-card-r-inner); font-size: 12.5px; }
+.sf-card__text pre { background: var(--sf-canvas); border-radius: var(--sf-r-sm); font-size: 12.5px; }
 .sf-card__more { font-size: 12px; color: var(--sf-primary); }
 .sf-card__footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; }
 .sf-card__tags { display: flex; flex-wrap: wrap; gap: 5px; }

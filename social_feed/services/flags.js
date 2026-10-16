@@ -1,15 +1,12 @@
-// services/flags.js — избранное и закрепы в data/flags.json (файлы заметок не изменяются).
-const { debounce } = require("lib/async");
-
-module.exports = async function createFlags({ storage, config }) {
-  const data = await storage.readJson("data/flags.json", {});
-  const save = debounce(() => storage.writeJson("data/flags.json", data), 400);
+// services/flags.js — избранное и закрепы (хранятся в едином файле данных; файлы заметок не изменяются).
+module.exports = function createFlags({ db }) {
+  const data = db.data.flags;
   const get = (p) => data[p.path] || {};
   function toggle(p, key) {
     const cur = { ...get(p) };
     if (cur[key]) delete cur[key]; else cur[key] = true;
     if (Object.keys(cur).length) data[p.path] = cur; else delete data[p.path];
-    save();
+    db.save();
     return !!cur[key];
   }
   return {
@@ -17,6 +14,5 @@ module.exports = async function createFlags({ storage, config }) {
     isPinned: (p) => !!get(p).pinned,
     toggleFavorite: (p) => toggle(p, "favorite"),
     togglePin: (p) => toggle(p, "pinned"),
-    countFavorites: (posts) => posts.filter((p) => !!get(p).favorite || p.favoriteMeta).length,
   };
 };

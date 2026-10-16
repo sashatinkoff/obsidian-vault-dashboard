@@ -23,7 +23,10 @@ function createPost(page, config) {
 
   const tags = [...new Set(toArray(F.tags).map(normTag).filter(Boolean))];
   const outPaths = toArray(F.outlinks).map((l) => String((l && l.path) || "")).filter(Boolean);
-  const mediaKinds = new Set(outPaths.map(kindOf).filter(Boolean));
+  const kinds = outPaths.map(kindOf).filter(Boolean);
+  const mediaKinds = new Set(kinds);
+  const mediaCounts = { image: 0, video: 0, audio: 0 };
+  for (const k of kinds) if (k in mediaCounts) mediaCounts[k]++;
   const explicitTitle = page.title || page.Title;
   const type = String(pageField(page, ["type", "тип", "kind"]) || "").toLowerCase();
 
@@ -37,7 +40,7 @@ function createPost(page, config) {
     links: outPaths.length,
     size: F.size || 0,
     mtime: toMs(F.mtime) || 0,
-    mediaKinds,
+    mediaKinds, mediaCounts,
     typeHint: type,
     favoriteMeta: pageField(page, [config.favoriteField]) === true || tags.some((t) => (config.favoriteTags || []).includes(t)),
     cover: pageField(page, ["cover", "image", "обложка"]) || null,

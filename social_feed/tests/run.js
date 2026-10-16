@@ -10,6 +10,8 @@ const ROOT = "scripts/social_feed";
 fs.cpSync(SRC, path.join(VAULT, ROOT), { recursive: true });
 
 let passed = 0, failed = 0;
+const readDb = () => JSON.parse(fs.readFileSync(path.join(VAULT, ROOT, "data/social_feed.json"), "utf8"));
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok  ", name); } catch (e) { failed++; console.log("  FAIL", name, "\n      ", e && e.stack ? e.stack.split("\n").slice(0, 4).join("\n       ") : e); } };
 
 (async () => {
@@ -86,6 +88,30 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     assert.strictEqual(Q.applyQuick(ps, "random", c).length, 2);
   });
 
+  await test("lib/layout.columnCount: min/max и телефон", () => {
+    const { columnCount } = R("lib/layout"), cfg = { columns: { min: 2, max: 4 }, minCardWidth: 320 };
+    assert.deepStrictEqual([400, 700, 1000, 1400, 2400, 0].map((w) => columnCount(w, cfg)), [1, 2, 2, 4, 4, 4]);
+    assert.strictEqual(columnCount(700, { columns: { min: 3, max: 5 }, minCardWidth: 320 }), 3);
+    assert.strictEqual(columnCount(2400, { columns: { min: 1, max: 3 }, minCardWidth: 320 }), 3);
+  });
+  await test("text.snippet / plainText", () => {
+    const T = R("lib/text");
+    assert.strictEqual(T.plainText("## Заголовок\n- [ ] **жирный** [[Заметка|алиас]] и [ссылка](http://x)"), "Заголовок жирный алиас и ссылка");
+    assert.ok(T.snippet("слово ".repeat(60), 50).endsWith("…"));
+  });
+  await test("stats.monthStats: считает файлы фото и видео", () => {
+    const { monthStats } = R("stats/period"), now = Date.now();
+    const p = (c) => ({ ts: now, links: 0, backlinks: 0, mediaCounts: c, mediaKinds: new Set() });
+    const r = monthStats([p({ image: 5, video: 0, audio: 0 }), p({ image: 2, video: 3, audio: 1 })], now);
+    assert.deepStrictEqual([r.media.photo, r.media.video, r.media.audio, r.mediaNotes.photo, r.mediaNotes.video], [7, 3, 1, 2, 1]);
+  });
+  await test("поиск: несколько слов через пробел", () => {
+    const { applyFilter } = R("filters/engine"), { merge } = R("filters/state");
+    const ps = [mk({ search: "заметка про crdt", tags: [] }), mk({ search: "заметка про граф" })];
+    assert.strictEqual(applyFilter(ps, merge({ text: "crdt заметка" })).length, 1);
+    assert.strictEqual(applyFilter(ps, merge({ text: "заметка" })).length, 2);
+  });
+
   console.log("\nsmoke (UI на заглушке DOM)");
   const types = {};
   const mkEnv = async (input) => {
@@ -124,9 +150,8 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     c.byClass("sf-nav__tab").find((x) => x.textContent.includes("Бенто")).click(); await new Promise((r) => setTimeout(r, 30));
     assert.ok(c.byClass("sf-feed--bento").length === 1);
     c.byClass("sf-card__meta")[0].byClass("sf-iconbtn")[1].click();
-    const flags = JSON.parse(fs.readFileSync(path.join(VAULT, ROOT, "data/flags.json"), "utf8").trim() || "{}");
-    await new Promise((r) => setTimeout(r, 500));
-    assert.ok(Object.keys(JSON.parse(fs.readFileSync(path.join(VAULT, ROOT, "data/flags.json"), "utf8"))).length === 1);
+    await new Promise((r) => setTimeout(r, 600));
+    assert.ok(Object.keys(readDb().flags).length === 1);
   });
   await test("fullWidth: кнопка переключает класс is-full", async () => {
     const c = await mkEnv({ view: "stream", id: "fw" });
@@ -137,14 +162,125 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     const c2 = await mkEnv({ view: "stream", id: "fw2", fullWidth: true });
     assert.ok(c2.byClass("sf-root")[0].classList.contains("is-full"));
   });
-  await test("студия: сохранение подборки в presets.json", async () => {
+  await test("студия: сохранение подборки в едином файле данных", async () => {
     const c = await mkEnv({ view: "studio", id: "studio-save" });
     c.byClass("sf-input").find((x) => x.attrs.placeholder && x.attrs.placeholder.startsWith("Например")).dispatch("input", { target: { value: "Тест" } });
-    const before = JSON.parse(fs.readFileSync(path.join(VAULT, ROOT, "data/presets.json"), "utf8")).length;
+    const before = readDb().presets.length;
     c.byClass("sf-btn--primary").find((x) => x.textContent.includes("Сохранить")).click();
-    await new Promise((r) => setTimeout(r, 50));
-    assert.strictEqual(JSON.parse(fs.readFileSync(path.join(VAULT, ROOT, "data/presets.json"), "utf8")).length, before + 1);
+    await new Promise((r) => setTimeout(r, 600));
+    assert.strictEqual(readDb().presets.length, before + 1);
   });
+  await test("единый файл данных: создаётся, содержит всё; после удаления пересоздаётся", async () => {
+    await mkEnv({ view: "stream", id: "db1" });
+    const d = readDb();
+    assert.ok(d.settings && d.settings.columns.min === 2 && d.settings.columns.max === 4 && Array.isArray(d.presets) && d.presets.length >= 6 && d.flags && d.ui);
+    const files = fs.readdirSync(path.join(VAULT, ROOT, "data"));
+    assert.deepStrictEqual(files, ["social_feed.json"]);
+    fs.unlinkSync(path.join(VAULT, ROOT, "data/social_feed.json"));
+    await mkEnv({ view: "stream", id: "db2" });
+    assert.ok(readDb().presets.length === 6);
+  });
+  await test("masonry: колонки по config.columns, карточки распределены", async () => {
+    const c = await mkEnv({ view: "stream", id: "ms" }); await wait(80);
+    assert.strictEqual(c.byClass("sf-masonry__col").length, 4);
+    assert.ok(c.byClass("sf-masonry__col").reduce((n, col) => n + col.byClass("sf-card").length, 0) >= 9);
+  });
+  await test("bento: плитки в сетке, у карточек нет masonry-колонок", async () => {
+    const c = await mkEnv({ view: "bento", id: "bn" }); await wait(80);
+    assert.ok(c.byClass("sf-bento__item").length >= 9 && c.byClass("sf-masonry").length === 0);
+    assert.ok(c.byClass("sf-bento")[0].style.gridTemplateColumns.startsWith("repeat(4"));
+  });
+  await test("timeline: группы по дням; flow из старых настроек читается как timeline", async () => {
+    const c = await mkEnv({ view: "stream", id: "tl", layout: "flow" }); await wait(40);
+    assert.ok(c.byClass("sf-timeline__group").length >= 5 && c.byClass("sf-feed--timeline").length === 1);
+    assert.deepStrictEqual(c.byClass("sf-segmented__btn").map((b) => b.textContent), ["Masonry", "Timeline"]);
+  });
+  await test("дата в карточке: «1 октября 2024, 16:12»", async () => {
+    const c = await mkEnv({ view: "stream", id: "dt" }); await wait(40);
+    assert.ok(c.byClass("sf-card__date").some((d) => /^\d{1,2} [а-я]+ \d{4}(, \d{2}:\d{2})?$/.test(d.textContent)), c.byClass("sf-card__date")[0].textContent);
+  });
+  await test("поиск: результаты сразу, очистка возвращает ленту", async () => {
+    const c = await mkEnv({ view: "stream", id: "srch" }); await wait(60);
+    const total = () => c.byClass("sf-card").length, all = total();
+    const input = c.byClass("sf-search")[0].byClass("sf-input")[0];
+    input.dispatch("focus"); await wait(150);
+    input.dispatch("input", { target: { value: "crdt" } }); await wait(250);
+    assert.ok(total() >= 1 && total() < all, `после поиска: ${total()} из ${all}`);
+    c.byClass("sf-search__clear")[0].click(); await wait(250);
+    assert.strictEqual(total(), all);
+  });
+  await test("сессия: возврат в блок сохраняет раздел и фильтры; вход через навигацию сбрасывает", async () => {
+    const c1 = await mkEnv({ view: "stream", id: "sess" }); await wait(40);
+    c1.byClass("sf-chip").find((x) => x.textContent.startsWith("#daily") && x.classList.contains("is-clickable")).click();
+    c1.byClass("sf-nav__tab").find((x) => x.textContent.includes("Бенто")).dispatch("click"); // вход в раздел → сброс
+    await wait(60);
+    assert.ok(!c1.byClass("sf-formula__body")[0].textContent.includes("#daily"), "после входа в раздел фильтр должен быть сброшен");
+    c1.byClass("sf-chip").find((x) => x.textContent.startsWith("#мысли") && x.classList.contains("is-clickable")).click(); await wait(40);
+    const c2 = await mkEnv({ view: "stream", id: "sess" }); await wait(60); // «вернулись» в заметку
+    assert.ok(c2.byClass("sf-feed--bento").length === 1, "раздел восстановлен");
+    assert.ok(c2.byClass("sf-formula__body")[0].textContent.includes("#мысли"), "фильтр восстановлен");
+  });
+  await test("конструктор: каждый вход через навигацию — новый", async () => {
+    const c = await mkEnv({ view: "studio", id: "std" });
+    c.byClass("sf-input").find((x) => x.attrs.placeholder && x.attrs.placeholder.startsWith("Например")).dispatch("input", { target: { value: "Черновик" } });
+    c.byClass("sf-nav__tab").find((x) => x.textContent.includes("Обзор")).dispatch("click"); await wait(30);
+    c.byClass("sf-nav__tab").find((x) => x.textContent.includes("Фильтры")).dispatch("click"); await wait(40);
+    const name = c.byClass("sf-input").find((x) => x.attrs.placeholder && x.attrs.placeholder.startsWith("Например"));
+    assert.strictEqual(name.value || "", "");
+    assert.ok(c.byClass("sf-hero")[0].textContent.includes("Новый смарт-фильтр"));
+  });
+  await test("конструктор: есть Сохранить и Удалить; удалить неактивно до сохранения; сохранить требует название", async () => {
+    const c = await mkEnv({ view: "studio", id: "std2" });
+    const bar = c.byClass("sf-actionbar")[0];
+    assert.ok(bar.textContent.includes("Сохранить подборку") && bar.textContent.includes("Удалить"));
+    const del = bar.byClass("sf-btn--danger")[0]; assert.ok(del.attrs.disabled !== undefined);
+    const before = readDb().presets.length;
+    bar.byClass("sf-btn--primary")[0].click(); await wait(500);
+    assert.strictEqual(readDb().presets.length, before, "без названия не сохраняется");
+    c.byClass("sf-input").find((x) => x.attrs.placeholder && x.attrs.placeholder.startsWith("Например")).dispatch("input", { target: { value: "Моя" } });
+    bar.byClass("sf-btn--primary")[0].click(); await wait(600);
+    assert.strictEqual(readDb().presets.length, before + 1);
+    const bar2 = c.byClass("sf-actionbar")[0];
+    assert.ok(bar2.textContent.includes("Сохранить как новую") && bar2.byClass("sf-btn--danger")[0].attrs.disabled === undefined);
+    const del2 = bar2.byClass("sf-btn--danger")[0]; del2.click(); del2.click(); await wait(600); // двойной клик = подтверждение
+    assert.strictEqual(readDb().presets.length, before);
+  });
+  await test("подборки: клик по карточке открывает Бенто; удаление с подтверждением; текст в превью", async () => {
+    const c = await mkEnv({ view: "collections", id: "col" }); await wait(80);
+    assert.ok(c.byClass("sf-richlink__excerpt").some((e) => e.textContent.length > 10), "в превью есть текст заметки");
+    const n = c.byClass("sf-preset").length, del = c.byClass("sf-preset")[0].byClass("sf-iconbtn").find((b) => b.attrs.title === "Удалить подборку");
+    del.click(); del.click(); await wait(600);
+    assert.strictEqual(c.byClass("sf-preset").length, n - 1);
+    c.byClass("sf-preset")[0].dispatch("click"); await wait(80);
+    assert.ok(c.byClass("sf-feed--bento").length === 1, "открылся Бенто");
+  });
+  await test("меню подборок: применить, сохранить текущий фильтр, удалить", async () => {
+    const c = await mkEnv({ view: "stream", id: "menu" }); await wait(60);
+    const dd = c.byClass("sf-dropdown")[0];
+    dd.byClass("sf-btn")[0].click();
+    assert.ok(dd.byClass("sf-menu__item").length >= 3);
+    dd.byClass("sf-menu__item").find((b) => b.textContent.includes("Цитаты")).click(); await wait(60);
+    assert.ok(c.byClass("sf-feed").length === 1 && c.byClass("sf-formula__body")[0].textContent.includes("quote") === false);
+    c.byClass("sf-chip").find((x) => x.textContent.startsWith("#daily") && x.classList.contains("is-clickable")).click(); await wait(40);
+    dd.byClass("sf-btn")[0].click(); dd.byClass("sf-btn")[0].click();
+    const before = readDb().presets.length;
+    const input = dd.byClass("sf-menu__save")[0].byClass("sf-input")[0];
+    input.value = "Из меню";
+    dd.byClass("sf-menu__save")[0].byClass("sf-btn--primary")[0].click(); await wait(600);
+    assert.strictEqual(readDb().presets.length, before + 1);
+    assert.ok(readDb().presets.some((p) => p.name === "Из меню" && p.filter.any.includes("daily")));
+  });
+  await test("пульс: карточки «Добавлено фото» и «Добавлено видео»", async () => {
+    const c = await mkEnv({ view: "overview", id: "pls" });
+    const t = c.byClass("sf-stat__head").map((x) => x.textContent).join("|");
+    assert.ok(t.includes("Добавлено фото") && t.includes("Добавлено видео"), t);
+  });
+  await test("css: hover карточки, размер цитаты, без column-count", async () => {
+    await mkEnv({ view: "stream", id: "css2" });
+    const css = document.getElementById("sf-style-" + R("lib/misc").hash(ROOT)).textContent;
+    assert.ok(css.includes("--sf-quote-size: calc(17px / 1.5)") && css.includes(".sf-card:hover { background: var(--sf-surface-hover)") && !css.includes("column-count"));
+  });
+
   await test("открытие заметки по клику на заголовок", async () => {
     const c = await mkEnv({ view: "stream", id: "open" });
     const t = c.byClass("sf-card__title")[0]; t.dispatch("click", { ctrlKey: true });

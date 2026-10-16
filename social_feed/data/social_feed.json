@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "settings": {
+    "sources": [
+      {
+        "id": "notes",
+        "label": "Заметки",
+        "folder": "notes",
+        "enabled": true
+      }
+    ],
+    "excludeFolders": [
+      "scripts",
+      ".obsidian",
+      "templates"
+    ],
+    "excludeTags": [],
+    "dateFields": [
+      "date",
+      "Date",
+      "created",
+      "дата",
+      "Дата"
+    ],
+    "favoriteField": "favorite",
+    "favoriteTags": [
+      "избранное",
+      "favorite"
+    ],
+    "quoteTags": [
+      "цитата",
+      "цитаты",
+      "quote",
+      "quotes"
+    ],
+    "theme": "auto",
+    "fullWidth": false,
+    "nav": true,
+    "defaultView": "stream",
+    "layout": "masonry",
+    "columns": {
+      "min": 2,
+      "max": 4
+    },
+    "minCardWidth": 320,
+    "pageSize": 24,
+    "excerptChars": 420,
+    "randomCount": 12,
+    "insightsCount": 3,
+    "topTags": 24,
+    "concurrency": 8,
+    "deepScan": false,
+    "showSourceBadge": false,
+    "dql": {
+      "dateExpr": "file.cday"
+    }
+  },
+  "ui": {
+    "layout": "timeline",
+    "fullWidth": true
+  },
+  "presets": [
+    {
+      "id": "voice",
+      "name": "Голосовые черновики",
+      "icon": "mic",
+      "description": "Аудио-заметки без обработки",
+      "quick": "all",
+      "filter": {
+        "types": [
+          "audio"
+        ],
+        "not": [
+          "архив"
+        ]
+      }
+    },
+    {
+      "id": "video",
+      "name": "Видео-конспекты",
+      "icon": "video",
+      "description": "Заметки с видео",
+      "quick": "all",
+      "filter": {
+        "types": [
+          "video"
+        ]
+      }
+    },
+    {
+      "id": "quotes",
+      "name": "Цитаты",
+      "icon": "quote",
+      "description": "Выписки и цитаты",
+      "quick": "all",
+      "filter": {
+        "types": [
+          "quote"
+        ]
+      }
+    },
+    {
+      "id": "today",
+      "name": "В этот день",
+      "icon": "history",
+      "description": "Что вы писали в этот день в прошлые годы",
+      "quick": "today",
+      "filter": {}
+    },
+    {
+      "id": "random30",
+      "name": "Случайная выборка за период",
+      "icon": "dice",
+      "description": "Рандом из заметок за последние 30 дней — 🎲 перемешивает",
+      "quick": "random",
+      "filter": {
+        "period": "30d"
+      }
+    }
+  ],
+  "flags": {}
+}

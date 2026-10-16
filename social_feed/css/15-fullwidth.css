@@ -1,6 +1,7 @@
 /* 15-fullwidth.css — режим «на всю ширину».
    Включается: config.fullWidth = true, параметром dv.view(..., { fullWidth: true }), кнопкой ⤢ в навигации
-   или вручную через frontmatter заметки `cssclasses: sf-page-full`. */
+   или вручную через frontmatter заметки `cssclasses: sf-page-full`.
+   Число колонок карточек задаётся в настройках: columns.min / columns.max / minCardWidth. */
 .sf-root.is-full { max-width: none; width: 100%; border-radius: 0; }
 
 /* Снимаем ограничение ширины строки у самой заметки (reading view и live preview) */
@@ -11,10 +12,3 @@
 .sf-page-full .cm-contentContainer,
 .sf-page-full .cm-content { max-width: none !important; width: 100% !important; margin-inline: 0 !important; }
 .sf-page-full.markdown-preview-view { padding-inline: var(--sf-gutter, 1rem); }
-
-/* В полной ширине добавляем колонки masonry/bento на очень широких экранах */
-@media (min-width: 1800px) {
-  .sf-root.is-full .sf-feed--masonry .sf-feed__grid { column-count: 4; }
-  .sf-root.is-full .sf-feed--bento .sf-feed__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .sf-bento-masonry .sf-root.is-full .sf-feed--bento .sf-feed__grid { column-count: 4; }
-}

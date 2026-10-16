@@ -8,7 +8,7 @@ const advanced = require("ui/filters/advanced");
 
 module.exports = function filterPanel(ctx, { posts, variant = "stream" }) {
   const el = h("section", { class: ["sf-panel", `sf-panel--${variant}`] });
-  const parts = [formulaBar(ctx), tagBuilder(ctx, { posts }), attrToggles(ctx), advanced(ctx)];
+  const parts = [formulaBar(ctx), tagBuilder(ctx, { posts }), attrToggles(ctx), advanced(ctx, { withSearch: variant === "studio" })];
   const [formula, tags, attrs, adv] = parts;
   let showAdv = variant === "studio";
 

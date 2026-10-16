@@ -1,7 +1,6 @@
-// ui/feed/layouts.js — раскладки ленты (CSS-классы; сама сетка — в css/50-feed.css).
+// ui/feed/layouts.js — раскладки экрана «Лента». (Flow убран: он повторял Timeline; старое значение "flow" читается как timeline.)
 const LAYOUTS = [
   { id: "masonry", label: "Masonry", icon: "grid" },
-  { id: "flow", label: "Flow", icon: "rows" },
   { id: "timeline", label: "Timeline", icon: "timeline" },
 ];
 module.exports = { LAYOUTS };

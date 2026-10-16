@@ -33,9 +33,29 @@ function truncateMarkdown(md, max) {
   return { text: out.trimEnd() + "…", truncated: true };
 }
 
+// Markdown → простой текст для коротких превью (подборки, поиск).
+function plainText(md) {
+  return String(md || "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, "$2")
+    .replace(/\[\[([^\]#|]*)(?:#[^\]|]*)?\]\]/g, "$1")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+(\[[ xX]\]\s+)?/gm, "")
+    .replace(/[*_~`=]{1,3}/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+// Короткий фрагмент по границе слова.
+function snippet(text, max) {
+  const t = plainText(text);
+  if (t.length <= max) return t;
+  const cut = t.lastIndexOf(" ", max);
+  return t.slice(0, cut > max * 0.6 ? cut : max).trimEnd() + "…";
+}
+
 const wordCount = (md) => (String(md || "").match(/[\p{L}\p{N}'’-]+/gu) || []).length;
 const readMinutes = (words, wpm = 180) => Math.max(1, Math.ceil(words / wpm));
 const escapeRegExp = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const dqlEscape = (s) => String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 
-module.exports = { stripFrontmatter, cleanForExcerpt, truncateMarkdown, wordCount, readMinutes, escapeRegExp, dqlEscape };
+module.exports = { plainText, snippet, stripFrontmatter, cleanForExcerpt, truncateMarkdown, wordCount, readMinutes, escapeRegExp, dqlEscape };

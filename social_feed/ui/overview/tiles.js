@@ -9,5 +9,5 @@ const TILES = [
 ];
 module.exports = function tiles(ctx) {
   return h("section", { class: "sf-section" }, h("h2", { class: "sf-section__title" }, "Пространства"),
-    h("div", { class: "sf-tiles" }, TILES.map((t) => h("button", { type: "button", class: "sf-tile", onClick: () => ctx.actions.setView(t.view) }, icon(t.icon, { size: 20 }), h("span", { class: "sf-tile__title" }, t.title), h("span", { class: "sf-tile__text" }, t.text)))));
+    h("div", { class: "sf-tiles" }, TILES.map((t) => h("button", { type: "button", class: "sf-tile", onClick: () => ctx.actions.enterView(t.view) }, icon(t.icon, { size: 20 }), h("span", { class: "sf-tile__title" }, t.title), h("span", { class: "sf-tile__text" }, t.text)))));
 };

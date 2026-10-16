@@ -1,27 +1,26 @@
-// app/state.js — реактивное состояние экрана + сохранение в data/state.json (по ключу input.id).
+// app/state.js — реактивное состояние экрана.
+// • Между перерисовками блока (переход в другую заметку и назад) состояние берётся из session — в памяти.
+// • Предпочтения UI (раскладка, полная ширина) сохраняются в едином файле данных.
 const { createStore } = require("lib/store");
-const { debounce } = require("lib/async");
 const { newSeed } = require("lib/random");
 const { merge } = require("filters/state");
 
-module.exports = async function createAppState({ storage, config, input }) {
-  const key = input.id || "default";
-  const all = await storage.readJson("data/state.json", {});
-  const saved = all[key] || {};
-  const store = createStore({
-    view: input.view || saved.view || config.defaultView,
-    fullWidth: input.fullWidth ?? saved.fullWidth ?? config.fullWidth,
-    layout: input.layout || saved.layout || config.layout,
-    quick: saved.quick || "all",
-    filter: merge(input.filter || saved.filter),
-    seed: newSeed(), page: 1, collapsed: !!saved.collapsed, presetId: null,
-  });
-  const save = debounce(async () => {
-    const s = store.get();
-    const cur = await storage.readJson("data/state.json", {});
-    cur[key] = { view: input.view ? undefined : s.view, layout: s.layout, fullWidth: s.fullWidth, quick: s.quick, filter: s.filter, collapsed: s.collapsed };
-    await storage.writeJson("data/state.json", cur);
-  }, 600);
-  store.subscribe(save, ["view", "layout", "quick", "filter", "collapsed", "fullWidth"]);
-  return store;
+const normLayout = (l) => (l === "timeline" || l === "masonry" ? l : l === "flow" ? "timeline" : "masonry");
+
+module.exports = function createAppState({ db, config, input, session }) {
+  const ui = db.data.ui || {};
+  const saved = session.get() && session.get().state;
+  const fresh = {
+    view: input.view || config.defaultView,
+    layout: normLayout(input.layout || ui.layout || config.layout),
+    fullWidth: !!(input.fullWidth ?? ui.fullWidth ?? config.fullWidth),
+    quick: "all", filter: merge(input.filter), seed: newSeed(), page: 1, collapsed: false, presetId: null, draft: null,
+  };
+  const store = createStore(saved ? { ...fresh, ...saved, layout: normLayout(saved.layout) } : fresh);
+  const restored = !!saved;
+
+  store.subscribe((s) => session.patch({ state: s }));
+  store.subscribe((s) => { db.data.ui = { ...db.data.ui, layout: s.layout, fullWidth: s.fullWidth }; db.save(); }, ["layout", "fullWidth"]);
+  session.patch({ state: store.get() });
+  return { store, restored };
 };

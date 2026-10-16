@@ -7,7 +7,7 @@
 .sf-section__title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
 .sf-section__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
-.sf-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sf-gutter); }
+.sf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--sf-gutter); }
 .sf-stat { display: flex; flex-direction: column; gap: 6px; padding: var(--sf-pad-lg); background: var(--sf-surface); border: 1px solid var(--sf-border); border-radius: var(--sf-r-lg); }
 .sf-stat__head { display: flex; align-items: center; gap: 8px; font-family: var(--sf-font-mono); font-size: 11px; color: var(--sf-text-2); }
 .sf-stat__head .sf-icon { color: var(--sf-primary); }

@@ -10,20 +10,19 @@ const DEFAULT_PRESETS = [
   { id: "random30", name: "Случайная выборка за период", icon: "dice", description: "Рандом из заметок за последние 30 дней — 🎲 перемешивает", quick: "random", filter: { period: "30d" } },
 ];
 
-module.exports = async function createPresets(storage) {
-  let list = await storage.readJson("data/presets.json", null);
-  if (!list) { list = DEFAULT_PRESETS; await storage.writeJson("data/presets.json", list); }
-  const persist = () => storage.writeJson("data/presets.json", list);
+function createPresets({ db }) {
+  const get = () => db.data.presets;
   return {
-    list: () => list,
-    get: (id) => list.find((p) => p.id === id),
-    async save(preset) {
+    list: () => get(),
+    get: (id) => get().find((p) => p.id === id),
+    save(preset) {
       const p = { ...preset, id: preset.id || uid("flt") };
-      const i = list.findIndex((x) => x.id === p.id);
-      list = i >= 0 ? list.map((x, j) => (j === i ? p : x)) : [...list, p];
-      await persist();
+      const list = get(), i = list.findIndex((x) => x.id === p.id);
+      db.data.presets = i >= 0 ? list.map((x, j) => (j === i ? p : x)) : [...list, p];
+      db.save();
       return p;
     },
-    async remove(id) { list = list.filter((p) => p.id !== id); await persist(); },
+    remove(id) { db.data.presets = get().filter((p) => p.id !== id); db.save(); },
   };
-};
+}
+module.exports = { DEFAULT_PRESETS, createPresets };

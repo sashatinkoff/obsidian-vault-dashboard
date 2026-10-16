@@ -7,7 +7,7 @@ const select = require("ui/common/select");
 const chip = require("ui/common/chip");
 const { debounce } = require("lib/async");
 
-module.exports = function advanced(ctx) {
+module.exports = function advanced(ctx, { withSearch = false } = {}) {
   const el = h("div", { class: "sf-advanced" });
   const setText = debounce((v) => ctx.actions.setFilter({ text: v }), 250);
   function draw() {
@@ -20,7 +20,7 @@ module.exports = function advanced(ctx) {
     const range = h("input", { class: "sf-range", type: "range", min: 0, max: 15, step: 1, value: f.minBacklinks, onInput: (e) => { val.textContent = +e.target.value > 0 ? `≥ ${e.target.value}` : "любое"; }, onChange: (e) => ctx.actions.setFilter({ minBacklinks: +e.target.value }) });
     const links = h("div", { class: "sf-field" }, h("label", null, "Бэклинки"), h("div", { class: "sf-range-wrap" }, range, val));
     const sort = h("div", { class: "sf-field" }, h("label", null, "Сортировка"), select({ options: SORTS, value: f.sort, onChange: (v) => ctx.actions.setFilter({ sort: v }) }));
-    el.append(search, period, links, sort);
+    el.append(...(withSearch ? [search] : []), period, links, sort);
     const sources = ctx.config.sources.filter((s) => s.enabled !== false);
     if (sources.length > 1) el.append(h("div", { class: "sf-field" }, h("label", null, "Источники"), h("div", { class: "sf-field__chips" }, sources.map((s) => chip({ text: s.label, kind: "attr", active: f.sources.includes(s.id), onClick: () => ctx.actions.toggleSource(s.id) })))));
   }

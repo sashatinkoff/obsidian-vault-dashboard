@@ -36,6 +36,6 @@ module.exports = function createCard(ctx, post) {
       body.append(h("div", { class: "sf-media-missing" }, "Не удалось прочитать заметку"));
     }
   }
-  hydrate();
+  el.sfReady = hydrate();
   return el;
 };
