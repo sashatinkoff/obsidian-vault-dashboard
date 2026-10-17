@@ -1,27 +1,54 @@
-// app/shell.js — корневой контейнер: тема, навигация, переключение экранов.
+// app/shell.js — корневой контейнер: тема, ширина, навигация, переключение экранов, восстановление прокрутки.
 const { h, clear } = require("lib/dom");
 const nav = require("ui/common/nav");
+const scrollTopButton = require("ui/common/scroll-top");
+const versionBadge = require("ui/common/version-badge");
 const views = require("views");
 
 async function mountShell(ctx, container) {
   const { store, config } = ctx;
-  const root = h("div", { class: "sf-root", dataset: { sfTheme: config.theme, sfView: store.get().view } });
+  const root = h("div", { class: "sf-root", dataset: { sfTheme: store.get().theme, sfView: store.get().view } });
   const region = h("div", { class: "sf-view" });
-  root.append(...(config.nav ? [nav(ctx)] : []), region);
   container.appendChild(root);
   ctx.rootEl = root;
+  ctx.scroll.setRoot(root);
 
-  // Полная ширина: класс на корне блока + класс на области заметки (снимает ограничение «читаемой длины строки»).
-  const host = container.closest ? container.closest(".markdown-preview-view, .markdown-source-view, .view-content") : null;
-  function applyWidth() {
-    const full = !!store.get().fullWidth;
-    root.classList.toggle("is-full", full);
-    if (host) host.classList.toggle("sf-page-full", full);
+  // Размер блока → классы: is-compact (< 900px), is-mobile (< singleColumnBelow, по умолчанию 560px — один столбец).
+  // Считаем по ширине самого блока, а не окна: так работает и в узкой боковой панели.
+  const sizeOf = () => root.clientWidth || container.clientWidth || 0;
+  function applySize() {
+    const w = sizeOf(), mobile = w > 0 && w < (config.singleColumnBelow || 560);
+    root.classList.toggle("is-compact", w > 0 && w < 900);
+    root.classList.toggle("is-mobile", mobile);
+    return mobile;
   }
-  applyWidth();
-  store.subscribe(applyWidth, ["fullWidth"]);
+  let wasMobile = applySize();
+  root.append(...(config.nav ? [nav(ctx)] : []), region, ...(config.nav ? [] : [h("div", { class: "sf-footer" }, "Journal Stream ", versionBadge(ctx))]), scrollTopButton(ctx));
+
+  // Область заметки (в ней живёт «полная ширина»). Класс снимается при уходе со страницы.
+  const host = container.closest ? container.closest(".markdown-preview-view, .markdown-source-view, .view-content") : null;
+  const setHostFull = (on) => { if (host) host.classList.toggle("sf-page-full", !!on); };
+  function applyLook() {
+    const s = store.get();
+    root.classList.toggle("is-full", !!s.fullWidth);
+    root.dataset.sfTheme = s.theme;
+    setHostFull(s.fullWidth);
+  }
+  applyLook();
+  store.subscribe(applyLook, ["fullWidth", "theme"]);
+
+  // Obsidian переиспользует контейнер заметки при навигации: если виджет исчез (ушли в другую заметку любым способом) —
+  // снимаем с контейнера класс полной ширины, чтобы новая заметка отображалась как обычно.
+  ctx.leavePage = () => { ctx.scroll.leave(); setHostFull(false); };
+  if (host && typeof setInterval === "function") {
+    const timer = setInterval(() => { if (root.isConnected === false) { setHostFull(false); clearInterval(timer); } }, 800);
+  }
 
   let dispose = null, token = 0;
+  if (typeof ResizeObserver !== "undefined") {
+    let t = null;
+    new ResizeObserver(() => { clearTimeout(t); t = setTimeout(() => { const m = applySize(); if (m !== wasMobile) { wasMobile = m; show(); } }, 120); }).observe(root);
+  }
   async function show() {
     const my = ++token;
     if (dispose) { try { dispose(); } catch (e) {} dispose = null; }
@@ -40,7 +67,7 @@ async function mountShell(ctx, container) {
   ctx.toast = (text) => { const t = h("div", { class: "sf-toast" }, text); root.append(t); setTimeout(() => t.remove(), 2200); };
   store.subscribe(show, ["view"]);
   await show();
-  // Вернулись в заметку — возвращаем прокрутку (карточки дорисовываются, поэтому восстановление с повторами).
+  // Вернулись на страницу — возвращаем прокрутку (карточки дорисовываются, поэтому восстановление с повторами).
   if (ctx.restored) { const s = ctx.session.get(); if (s && s.scroll) ctx.scroll.restore(s.scroll); }
 }
 module.exports = { mountShell };

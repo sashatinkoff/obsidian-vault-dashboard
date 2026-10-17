@@ -19,6 +19,17 @@ function createPost(page, config) {
   const raw = pageField(page, config.dateFields);
   let ts = toMs(raw), timed = ts != null && hasTime(raw, ts);
   if (ts == null) ts = fromFilename(F.name);
+  // Время: из отдельного поля (time / время) или — если включено в настройках — из времени создания/изменения файла.
+  if (ts != null && !timed) {
+    const tf = pageField(page, ["time", "Time", "время", "Время"]);
+    const tm = tf != null && String(tf).match(/(\d{1,2}):(\d{2})/);
+    let hm = tm ? [+tm[1], +tm[2]] : null;
+    if (!hm && (config.timeFallback === "ctime" || config.timeFallback === "mtime")) {
+      const src = toMs(config.timeFallback === "ctime" ? F.ctime : F.mtime);
+      if (src != null) { const d = new Date(src); hm = [d.getHours(), d.getMinutes()]; }
+    }
+    if (hm) { const d = new Date(ts); d.setHours(hm[0], hm[1], 0, 0); ts = d.getTime(); timed = true; }
+  }
   if (ts == null) ts = toMs(F.cday) ?? toMs(F.ctime) ?? 0;
 
   const tags = [...new Set(toArray(F.tags).map(normTag).filter(Boolean))];

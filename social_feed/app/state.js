@@ -14,13 +14,15 @@ module.exports = function createAppState({ db, config, input, session }) {
     view: input.view || config.defaultView,
     layout: normLayout(input.layout || ui.layout || config.layout),
     fullWidth: !!(input.fullWidth ?? ui.fullWidth ?? config.fullWidth),
-    quick: "all", filter: merge(input.filter), seed: newSeed(), page: 1, collapsed: false, presetId: null, draft: null,
+    openInNewTab: !!(input.openInNewTab ?? ui.openInNewTab ?? config.openInNewTab),
+    theme: input.theme || ui.theme || config.theme,
+    quick: "all", filter: merge(input.filter), seed: newSeed(), page: 1, collapsed: null, presetId: null, draft: null,
   };
   const store = createStore(saved ? { ...fresh, ...saved, layout: normLayout(saved.layout) } : fresh);
   const restored = !!saved;
 
   store.subscribe((s) => session.patch({ state: s }));
-  store.subscribe((s) => { db.data.ui = { ...db.data.ui, layout: s.layout, fullWidth: s.fullWidth }; db.save(); }, ["layout", "fullWidth"]);
+  store.subscribe((s) => { db.data.ui = { ...db.data.ui, layout: s.layout, fullWidth: s.fullWidth, openInNewTab: s.openInNewTab, theme: s.theme }; db.save(); }, ["layout", "fullWidth", "openInNewTab", "theme"]);
   session.patch({ state: store.get() });
   return { store, restored };
 };

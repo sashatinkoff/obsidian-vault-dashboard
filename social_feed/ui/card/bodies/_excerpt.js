@@ -1,5 +1,6 @@
 // ui/card/bodies/_excerpt.js — общий рендер текстового превью (markdown, с обрезкой и «Читать далее»).
 const { h } = require("lib/dom");
+const hookLinks = require("ui/card/links");
 const { cleanForExcerpt, truncateMarkdown } = require("lib/text");
 
 // Тело заметки без цитат/задач — чтобы не дублировать то, что уже показано отдельным блоком.
@@ -16,6 +17,7 @@ async function renderExcerpt(ctx, post, feats, parent, opts = {}) {
   const box = h("div", { class: "sf-card__text markdown-rendered" });
   parent.append(box);
   await ctx.md.render(text, box, post.path);
+  hookLinks(ctx, box, post);
   if (truncated) parent.append(h("a", { class: "sf-card__more", href: "#", onClick: (e) => { e.preventDefault(); ctx.openNote(post.path, e); } }, "Читать далее"));
   return box;
 }

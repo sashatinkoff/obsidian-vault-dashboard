@@ -2,6 +2,7 @@
 const DAY = 86400000;
 const MONTHS_GEN = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
 const MONTHS_NOM = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+const RU_MONTH = { янв: 0, фев: 1, мар: 2, апр: 3, мая: 4, май: 4, июн: 5, июл: 6, авг: 7, сен: 8, окт: 9, ноя: 10, дек: 11 };
 const pad = (n) => String(n).padStart(2, "0");
 
 function toMs(v) {
@@ -9,12 +10,15 @@ function toMs(v) {
   if (typeof v === "number") return isFinite(v) ? v : null;
   if (v instanceof Date) return isNaN(v) ? null : v.getTime();
   if (typeof v.toMillis === "function") return v.toMillis(); // luxon DateTime (Dataview)
-  if (typeof v === "object" && v.path) return null;           // Link
+  if (typeof v === "object" && v.path) return fromFilename(v.path); // [[2024-10-01]] — дата из имени заметки
   const s = String(v).trim();
   let m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
   if (m) return new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)).getTime();
   m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[,\s]+(\d{1,2}):(\d{2}))?/);
   if (m) return new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)).getTime();
+  // «1 октября 2024, 16:12» · «1 окт 2024 г. в 16:12» · «1 октября 2024»
+  m = s.toLowerCase().match(/^(\d{1,2})\s+([а-яё]+)\.?\s+(\d{4})(?:\s*г\.?)?(?:[,\sв]+(\d{1,2}):(\d{2}))?/);
+  if (m && RU_MONTH[m[2].slice(0, 3)] !== undefined) return new Date(+m[3], RU_MONTH[m[2].slice(0, 3)], +m[1], +(m[4] || 0), +(m[5] || 0)).getTime();
   const t = Date.parse(s);
   return isNaN(t) ? null : t;
 }

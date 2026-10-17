@@ -11,7 +11,7 @@ module.exports = function createActions(ctx) {
   const filter = () => store.get().filter;
   const setFilter = (patch) => store.set({ filter: merge(filter(), patch), page: 1 });
   // Состояние «с чистого листа» — применяется при входе в раздел.
-  const clean = () => ({ filter: defaultFilter(), quick: "all", page: 1, seed: newSeed(), presetId: null, collapsed: false, draft: null });
+  const clean = () => ({ filter: defaultFilter(), quick: "all", page: 1, seed: newSeed(), presetId: null, collapsed: null, draft: null });
 
   return {
     setFilter,
@@ -25,17 +25,25 @@ module.exports = function createActions(ctx) {
     toggleType: (t) => setFilter({ types: toggleIn(filter().types, t) }),
     toggleSource: (s) => setFilter({ sources: toggleIn(filter().sources, s) }),
     setFullWidth: (fullWidth) => store.set({ fullWidth }),
+    setOpenInNewTab: (openInNewTab) => store.set({ openInNewTab }),
+    setTheme: (theme) => store.set({ theme }),
     setLayout: (layout) => store.set({ layout }),
     setCollapsed: (collapsed) => store.set({ collapsed }),
     nextPage: () => store.set({ page: store.get().page + 1 }),
 
     // Вход в раздел через навигацию: ВСЕГДА чистое состояние (фильтры, режим, страница, черновик конструктора).
-    enterView(view) { store.set({ ...clean(), view }); if (ctx.scroll) ctx.scroll.toBlockTop(ctx.rootEl); },
+    enterView(view) { store.set({ ...clean(), view }); if (ctx.scroll) ctx.scroll.toBlockTop(); },
     // Переход с переносом состояния (подборка, тег, день…) — без сброса.
     openPreset(preset, view = "stream") { store.set({ ...toState(preset), page: 1, presetId: preset.id || null, draft: null, view }); },
     applyPreset(preset) { store.set({ ...toState(preset), page: 1, presetId: preset.id || null }); },
     editPreset(preset) { store.set({ ...toState(preset), page: 1, presetId: preset.id, draft: draftOf(preset), view: "studio" }); },
     newPreset() { store.set({ ...clean(), draft: newDraft(), view: "studio" }); },
+    // Клик по тегу в карточке: в Ленте/Бенто — переключить тег в фильтре; в других разделах — перейти в ленту с этим тегом.
+    tagClick(tag) {
+      const v = store.get().view;
+      if (v === "stream" || v === "bento") store.set({ filter: toggleTag(filter(), "any", tag), page: 1 });
+      else store.set({ ...clean(), filter: toggleTag(defaultFilter(), "any", tag), view: "stream" });
+    },
     jumpToTag(tag) { store.set({ ...clean(), filter: toggleTag(defaultFilter(), "any", tag), view: "stream" }); },
     jumpToDay(day) { store.set({ ...clean(), filter: merge(null, { day }), view: "stream" }); },
   };

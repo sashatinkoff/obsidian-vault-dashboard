@@ -6,6 +6,7 @@ const loadMore = require("ui/feed/load-more");
 const masonry = require("ui/feed/masonry");
 const bento = require("ui/feed/bento");
 const empty = require("ui/common/empty");
+const { toTokens } = require("filters/formula");
 
 module.exports = function feed(ctx, { posts, layout, page }) {
   layout = layout === "flow" ? "timeline" : layout;
@@ -14,10 +15,14 @@ module.exports = function feed(ctx, { posts, layout, page }) {
   wrap.sfDispose = () => parts.forEach((p) => p.sfDispose && p.sfDispose());
 
   if (!posts.length) {
-    wrap.append(empty({ title: "Ничего не найдено", hint: "Ослабьте фильтры или выберите другой быстрый режим.", action: h("button", { type: "button", class: "sf-btn", onClick: () => ctx.actions.resetFilter() }, "Сбросить фильтры") }));
+    const st = ctx.store.get(), act = [];
+    if (st.quick !== "all") act.push("режим «" + ({ today: "В этот день", random: "Рандомные", favorites: "Избранное" }[st.quick] || st.quick) + "»");
+    act.push(...toTokens(st.filter).filter((t) => t.t !== "paren" && t.t !== "op").map((t) => t.v));
+    wrap.append(empty({ title: "Ничего не найдено", hint: act.length ? "Сейчас применено: " + act.join(" · ") : "В выбранных источниках нет заметок.", action: h("button", { type: "button", class: "sf-btn", onClick: () => ctx.actions.resetFilter() }, "Сбросить фильтры") }));
     return wrap;
   }
-  const visible = posts.slice(0, ctx.config.pageSize * page);
+  const mobile = !!(ctx.rootEl && ctx.rootEl.classList.contains("is-mobile"));
+  const visible = posts.slice(0, (mobile ? ctx.config.pageSizeMobile || 12 : ctx.config.pageSize) * page);
 
   if (layout === "timeline") {
     // Timeline: колонка по дням; внутри дня — по две карточки в ряд одинаковой высоты, а если не помещаются — по одной.

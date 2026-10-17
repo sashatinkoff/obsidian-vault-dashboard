@@ -6,18 +6,22 @@ const DEFAULTS = {
   sources: [{ id: "notes", label: "Заметки", folder: "notes", enabled: true }],
   excludeFolders: ["scripts", ".obsidian", "templates"],
   excludeTags: [],
-  dateFields: ["date", "Date", "created", "дата", "Дата"],
+  dateFields: ["date", "Date", "created", "Created", "дата", "Дата", "datetime", "Дата и время", "published"],
+  timeFallback: "none",       // none | ctime | mtime — откуда брать время, если в дате заметки его нет
+  openInNewTab: false,        // открывать заметку по клику на карточку в новой вкладке (Ctrl/Cmd+клик — всегда в новой)
   favoriteField: "favorite",
   favoriteTags: ["избранное", "favorite"],
   quoteTags: ["цитата", "цитаты", "quote", "quotes"],
   theme: "auto",              // auto | dark | light
-  fullWidth: false,           // true: растянуть блок и заметку на всю ширину окна (можно переключать кнопкой в навигации)
+  fullWidth: true,            // true: растянуть блок и заметку на всю ширину окна (можно переключать кнопкой в навигации)
   nav: true,                  // верхняя навигация между экранами
   defaultView: "stream",      // overview | stream | bento | collections | studio
   layout: "masonry",          // masonry | flow | timeline (для вида stream)
   columns: { min: 2, max: 4 }, // колонки карточек на десктопе (masonry и бенто); на телефоне всегда 1
   minCardWidth: 320,          // минимальная ширина карточки в px — по ней считается, сколько колонок помещается
   pageSize: 24,
+  pageSizeMobile: 12,         // сколько карточек за раз на телефоне (одна колонка)
+  singleColumnBelow: 560,     // ширина блока (px), ниже которой лента — в один столбец и включается мобильный интерфейс
   excerptChars: 420,
   randomCount: 12,
   insightsCount: 3,

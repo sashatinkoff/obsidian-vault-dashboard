@@ -17,8 +17,11 @@ module.exports = async function createDb(storage, defaults) {
   let raw = await storage.readJson(FILE, null);
   const fresh = !raw;
   if (fresh) raw = await migrateLegacy(storage);
+  // v2: страница по умолчанию на всю ширину; новые ключи подхватываются из defaults
+  if (!fresh && (raw.version || 1) < 2 && raw.settings && raw.settings.fullWidth === false) raw.settings.fullWidth = true;
   const data = {
-    version: 1,
+    version: 2,
+    appVersion: raw.appVersion,
     settings: deepMerge(defaults.settings, raw.settings || {}),
     ui: raw.ui || {},
     presets: Array.isArray(raw.presets) ? raw.presets : defaults.presets,
@@ -26,5 +29,5 @@ module.exports = async function createDb(storage, defaults) {
   };
   const save = debounce(() => storage.writeJson(FILE, data), 400);
   if (fresh) await storage.writeJson(FILE, data);
-  return { data, save, flush: () => save.flush(), path: FILE };
+  return { data, save, flush: () => save.flush(), path: FILE, fresh };
 };

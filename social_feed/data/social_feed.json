@@ -1,5 +1,6 @@
 {
-  "version": 1,
+  "version": 2,
+  "appVersion": "1.1.0",
   "settings": {
     "sources": [
       {
@@ -19,9 +20,15 @@
       "date",
       "Date",
       "created",
+      "Created",
       "дата",
-      "Дата"
+      "Дата",
+      "datetime",
+      "Дата и время",
+      "published"
     ],
+    "timeFallback": "none",
+    "openInNewTab": false,
     "favoriteField": "favorite",
     "favoriteTags": [
       "избранное",
@@ -34,7 +41,7 @@
       "quotes"
     ],
     "theme": "auto",
-    "fullWidth": false,
+    "fullWidth": true,
     "nav": true,
     "defaultView": "stream",
     "layout": "masonry",
@@ -44,6 +51,8 @@
     },
     "minCardWidth": 320,
     "pageSize": 24,
+    "pageSizeMobile": 12,
+    "singleColumnBelow": 560,
     "excerptChars": 420,
     "randomCount": 12,
     "insightsCount": 3,
@@ -56,10 +65,27 @@
     }
   },
   "ui": {
-    "layout": "timeline",
-    "fullWidth": true
+    "layout": "masonry",
+    "fullWidth": true,
+    "openInNewTab": false,
+    "theme": "dark"
   },
   "presets": [
+    {
+      "id": "atomic",
+      "name": "Атомарные озарения недели",
+      "icon": "bolt",
+      "description": "Записи с высокой плотностью связей за последние 7 дней",
+      "quick": "all",
+      "filter": {
+        "any": [
+          "мысли",
+          "zettel"
+        ],
+        "minBacklinks": 3,
+        "period": "7d"
+      }
+    },
     {
       "id": "voice",
       "name": "Голосовые черновики",

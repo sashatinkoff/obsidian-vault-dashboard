@@ -1,5 +1,7 @@
-// filters/formula.js — человекочитаемая формула из состояния фильтра: ( #a OR #b ) AND NOT ( #x ).
+// filters/formula.js — человекочитаемая формула фильтра. Показывает ВСЕ активные условия
+// (теги, атрибуты, тип, источник, период, связи, день, текст) — скрытых условий не бывает.
 const { label } = require("filters/attrs");
+const { byId: periods } = require("filters/periods");
 
 function toTokens(f) {
   const groups = [];
@@ -18,7 +20,14 @@ function toTokens(f) {
     out.push({ t: "paren", v: ")" });
   }
   for (const a of f.attrs) { sep(); out.push({ t: "attr", v: label(a), attr: a }); }
-  if (f.day) { sep(); out.push({ t: "day", v: "день: " + f.day }); }
+  // прочие условия — отдельными удаляемыми чипами
+  const cond = (v, key, item) => { sep(); out.push({ t: "cond", v, key, item }); };
+  for (const t of f.types) cond("тип: " + t, "types", t);
+  for (const s of f.sources) cond("источник: " + s, "sources", s);
+  if (f.period && f.period !== "all") cond("период: " + (periods[f.period] ? periods[f.period].label.toLowerCase() : f.period), "period");
+  if (f.minBacklinks > 0) cond("связи ≥ " + f.minBacklinks, "minBacklinks");
+  if (f.day) cond("день: " + f.day, "day");
+  if ((f.text || "").trim()) cond("поиск: «" + f.text.trim() + "»", "text");
   return out;
 }
 const toString = (f) => toTokens(f).map((t) => t.v).join(" ");

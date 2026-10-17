@@ -10,7 +10,7 @@ module.exports = function cardFooter(ctx, post) {
   const tags = post.tags.slice(0, 6);
   const bl = post.backlinks;
   return h("footer", { class: "sf-card__footer" },
-    h("div", { class: "sf-card__tags" }, tags.map((t) => chip({ text: "#" + t, active: active.has(t), onClick: () => ctx.actions.toggleTag("any", t), title: "Фильтр по тегу" })), post.tags.length > 6 && h("span", { class: "sf-card__tagmore" }, `+${post.tags.length - 6}`)),
+    h("div", { class: "sf-card__tags" }, tags.map((t) => chip({ text: "#" + t, active: active.has(t), onClick: () => ctx.actions.tagClick(t), title: "Фильтр по тегу на этой странице" })), post.tags.length > 6 && h("span", { class: "sf-card__tagmore" }, `+${post.tags.length - 6}`)),
     h("div", { class: "sf-card__stats" },
       bl > 0 && h("span", { class: "sf-card__backlinks", title: "Входящие ссылки" }, icon("back", { size: 12 }), `${bl} ${plural(bl, ["бэклинк", "бэклинка", "бэклинков"])}`),
       post.feats && h("span", { class: "sf-card__read" }, `${post.feats.readMin} мин`),

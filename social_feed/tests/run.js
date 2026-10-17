@@ -66,7 +66,8 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
   await test("formula + DQL", () => {
     const S = R("filters/state"), F = R("filters/formula"), Q = R("filters/dql");
     const f = S.merge({ any: ["мысли", "daily"], not: ["архив"], period: "14d", minBacklinks: 3, attrs: ["task"] });
-    assert.strictEqual(F.toString(f), "( #мысли OR #daily ) AND NOT ( !#архив ) AND С задачами".replace("С задачами", "Задачи"));
+    assert.strictEqual(F.toString(f), "( #мысли OR #daily ) AND NOT ( !#архив ) AND Задачи AND период: за 14 дней AND связи ≥ 3");
+    assert.ok(F.toTokens(S.merge({ types: ["audio"], sources: ["lj"], text: "x", day: "2026-01-01" })).filter((t) => t.t === "cond").length === 4, "скрытых условий нет — все видны как чипы");
     const { query } = Q.compile(f, { config: { sources: [{ id: "lj", folder: "LiveJournal" }] } });
     for (const part of ['FROM "LiveJournal"', 'contains(file.tags, "#мысли") OR contains(file.tags, "#daily")', '!contains(file.tags, "#архив")', "dur(14 days)", "length(file.inlinks) >= 3", "length(file.tasks) > 0", "SORT file.cday DESC"]) assert.ok(query.includes(part), "нет: " + part + "\n" + query);
   });
@@ -114,8 +115,9 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
 
   console.log("\nsmoke (UI на заглушке DOM)");
   const types = {};
-  const mkEnv = async (input) => {
+  const mkEnv = async (input, width) => {
     const container = document.createElement("div");
+    if (width) container.clientWidth = width;
     const dv = makeDv(container);
     await R("app/main").run({ dv, app, input, root: ROOT, container });
     await new Promise((r) => setTimeout(r, 30));
@@ -156,11 +158,11 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
   await test("fullWidth: кнопка переключает класс is-full", async () => {
     const c = await mkEnv({ view: "stream", id: "fw" });
     const root = c.byClass("sf-root")[0];
+    assert.ok(root.classList.contains("is-full"), "по умолчанию — на всю ширину");
+    c.byClass("sf-nav__right")[0].byClass("sf-iconbtn")[1].click(); await new Promise((r) => setTimeout(r, 20));
     assert.ok(!root.classList.contains("is-full"));
-    c.byClass("sf-nav")[0].byClass("sf-iconbtn")[0].click(); await new Promise((r) => setTimeout(r, 20));
-    assert.ok(root.classList.contains("is-full"));
-    const c2 = await mkEnv({ view: "stream", id: "fw2", fullWidth: true });
-    assert.ok(c2.byClass("sf-root")[0].classList.contains("is-full"));
+    const c2 = await mkEnv({ view: "stream", id: "fw2", fullWidth: false });
+    assert.ok(!c2.byClass("sf-root")[0].classList.contains("is-full"));
   });
   await test("студия: сохранение подборки в едином файле данных", async () => {
     const c = await mkEnv({ view: "studio", id: "studio-save" });
@@ -182,13 +184,13 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
   });
   await test("masonry: колонки по config.columns, карточки распределены", async () => {
     const c = await mkEnv({ view: "stream", id: "ms" }); await wait(80);
-    assert.strictEqual(c.byClass("sf-masonry__col").length, 4);
-    assert.ok(c.byClass("sf-masonry__col").reduce((n, col) => n + col.byClass("sf-card").length, 0) >= 9);
+    assert.strictEqual(c.byClass("sf-tilegrid--masonry").length, 1);
+    assert.ok(c.byClass("sf-tilegrid__item").length >= 9 && c.byClass("sf-tilegrid__item").every((i) => i.children[0].classList.contains("sf-card")));
   });
   await test("bento: плитки в сетке, у карточек нет masonry-колонок", async () => {
     const c = await mkEnv({ view: "bento", id: "bn" }); await wait(80);
-    assert.ok(c.byClass("sf-bento__item").length >= 9 && c.byClass("sf-masonry").length === 0);
-    assert.ok(c.byClass("sf-bento")[0].style.gridTemplateColumns.startsWith("repeat(4"));
+    assert.strictEqual(c.byClass("sf-tilegrid--bento").length, 1);
+    assert.ok(c.byClass("sf-tilegrid__item").length >= 9);
   });
   await test("timeline: группы по дням; flow из старых настроек читается как timeline", async () => {
     const c = await mkEnv({ view: "stream", id: "tl", layout: "flow" }); await wait(40);
@@ -260,7 +262,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     dd.byClass("sf-btn")[0].click();
     assert.ok(dd.byClass("sf-menu__item").length >= 3);
     dd.byClass("sf-menu__item").find((b) => b.textContent.includes("Цитаты")).click(); await wait(60);
-    assert.ok(c.byClass("sf-feed").length === 1 && c.byClass("sf-formula__body")[0].textContent.includes("quote") === false);
+    assert.ok(c.byClass("sf-feed").length === 1 && c.byClass("sf-formula__body")[0].textContent.includes("подборка: Цитаты") && c.byClass("sf-formula__body")[0].textContent.includes("тип: quote"));
     c.byClass("sf-chip").find((x) => x.textContent.startsWith("#daily") && x.classList.contains("is-clickable")).click(); await wait(40);
     dd.byClass("sf-btn")[0].click(); dd.byClass("sf-btn")[0].click();
     const before = readDb().presets.length;
@@ -281,8 +283,144 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     assert.ok(css.includes("--sf-quote-size: calc(17px / 1.5)") && css.includes(".sf-card:hover { background: var(--sf-surface-hover)") && !css.includes("column-count"));
   });
 
+  await test("tile-grid: порядок слева направо, затем сверху вниз; широкие плитки на 2 колонки", async () => {
+    const tileGrid = R("ui/feed/tile-grid");
+    const cfg = { columns: { min: 2, max: 4 }, minCardWidth: 320 };
+    const mkCard = (cls, hgt) => { const c = document.createElement("div"); c.className = cls; c.sfReady = Promise.resolve(); c._h = hgt; return c; };
+    const cards = [mkCard("a", 100), mkCard("b", 300), mkCard("c", 100), mkCard("d", 100), mkCard("e", 100), mkCard("f", 100), mkCard("wide", 100)];
+    const el = tileGrid({ config: cfg }, cards, { wide: (c) => c.classList.contains("wide") });
+    el.clientWidth = 1500;
+    el.childNodes.forEach((it) => Object.defineProperty(it, "offsetHeight", { get() { return it.firstChild._h; } }));
+    await wait(40);
+    const pos = (i) => ({ left: parseFloat(el.childNodes[i].style.left), top: parseFloat(el.childNodes[i].style.top), w: parseFloat(el.childNodes[i].style.width) });
+    // первая строка: a b c d слева направо
+    assert.ok(pos(0).left < pos(1).left && pos(1).left < pos(2).left && pos(2).left < pos(3).left && [0, 1, 2, 3].every((i) => pos(i).top === 0), "первая строка слева направо");
+    // e — под самой короткой колонкой слева (a, c, d равны по высоте → самая левая из коротких = колонка a)
+    assert.ok(pos(4).left === pos(0).left && pos(4).top > 0, "e под a");
+    // f — следующая короткая слева направо (c)
+    assert.ok(pos(5).left === pos(2).left, "f под c");
+    assert.ok(pos(6).w > pos(0).w * 1.9, "широкая плитка занимает две колонки");
+    el.sfDispose();
+  });
+  await test("карточка: клик открывает заметку; клик по чипу тега — фильтр, а не открытие", async () => {
+    const c = await mkEnv({ view: "stream", id: "clk" }); await wait(60);
+    app.opened.length = 0;
+    const card = c.byClass("sf-card")[0];
+    card.dispatch("click");
+    assert.strictEqual(app.opened.length, 1, "открыта заметка");
+    const chipEl = card.byClass("sf-chip")[0];
+    chipEl.dispatch("click", { target: chipEl }); // обработчик чипа; всплытие до карточки в заглушке не эмулируется — проверяем guard напрямую
+    assert.strictEqual(app.opened.length, 1);
+    card.dispatch("click", { target: chipEl });
+    assert.strictEqual(app.opened.length, 1, "клик по чипу не открывает заметку");
+  });
+  await test("тег внутри текста карточки применяется на странице (а не уходит в поиск Obsidian)", async () => {
+    const c = await mkEnv({ view: "stream", id: "taglink" }); await wait(80);
+    const box = c.byClass("sf-card__text")[0];
+    const a = document.createElement("a"); a.className = "tag"; a.setAttribute("href", "#zettel"); a.append("#zettel"); box.append(a);
+    let prevented = false;
+    box.dispatch("click", { target: a, preventDefault() { prevented = true; } });
+    await wait(40);
+    assert.ok(prevented, "стандартное поведение Obsidian отменено");
+    assert.ok(c.byClass("sf-formula__body")[0].textContent.includes("#zettel"), "тег появился в формуле фильтра");
+  });
+  await test("автодополнение тега: подсказки, выбор, submit формы (мобильный Enter/«+»)", async () => {
+    const { suggestTags } = R("ui/filters/tag-builder");
+    assert.deepStrictEqual(suggestTags([{ tag: "daily", count: 3 }, { tag: "mydaily", count: 9 }, { tag: "dev", count: 1 }], "da").map((t) => t.tag), ["daily", "mydaily"]);
+    const c = await mkEnv({ view: "studio", id: "ac" });
+    const input = c.byClass("sf-tagadd__input")[0];
+    input.value = "da"; input.dispatch("input");
+    const items = c.byClass("sf-suggest__item");
+    assert.ok(items.length >= 1 && items[0].textContent.includes("#daily"), "подсказка #daily");
+    items[0].dispatch("click"); await wait(30);
+    assert.ok(c.byClass("sf-formula__body")[0].textContent.includes("#daily"));
+    input.value = "новыйтег"; c.byClass("sf-tagadd")[0].dispatch("submit"); await wait(30);
+    assert.ok(c.byClass("sf-formula__body")[0].textContent.includes("#новыйтег"), "submit формы добавляет тег");
+  });
+  await test("кнопка «Наверх» есть на странице", async () => {
+    const c = await mkEnv({ view: "stream", id: "totop" });
+    assert.ok(c.byClass("sf-totop").length === 1 && c.byClass("sf-totop")[0].classList.contains("is-hidden"));
+  });
+  await test("дата и время как в заметке: «1 октября 2024, 16:12»", async () => {
+    const D = R("lib/date");
+    assert.strictEqual(D.toMs("1 октября 2024, 16:12"), new Date(2024, 9, 1, 16, 12).getTime());
+    assert.strictEqual(D.toMs("1 окт 2024 г. в 07:05"), new Date(2024, 9, 1, 7, 5).getTime());
+    assert.strictEqual(D.toMs("21 мая 2025"), new Date(2025, 4, 21).getTime());
+    const c = await mkEnv({ view: "stream", id: "ru", filter: { text: "ru-date" } }); await wait(60);
+    assert.ok(c.byClass("sf-card__date").some((d) => d.textContent === "1 октября 2024, 16:12"), c.byClass("sf-card__date").map((d) => d.textContent).join("|"));
+  });
+  await test("открытие в новой вкладке: настройка в навигации и Ctrl-клик", async () => {
+    const c = await mkEnv({ view: "stream", id: "nt" }); await wait(60);
+    app.opened.length = 0;
+    c.byClass("sf-card__title")[0].dispatch("click");
+    assert.strictEqual(app.opened[0][1], false);
+    c.byClass("sf-nav__right")[0].byClass("sf-iconbtn")[0].click(); await wait(20);
+    c.byClass("sf-card__title")[0].dispatch("click");
+    assert.strictEqual(app.opened[1][1], true, "в новой вкладке после включения");
+  });
+  await test("«В этот день»: счётчик подборки совпадает с лентой, пустое состояние объясняет условия", async () => {
+    const c = await mkEnv({ view: "collections", id: "today-cnt" }); await wait(80);
+    const card = c.byClass("sf-preset").find((x) => x.textContent.includes("В этот день"));
+    const n = card.byClass("sf-preset__count")[0].textContent.split(" ")[0];
+    card.dispatch("click"); await wait(100);
+    assert.strictEqual(c.byClass("sf-counter__n")[0].textContent.split(" ")[0], n);
+    const input = c.byClass("sf-search")[0].byClass("sf-input")[0];
+    input.value = "ничегонет"; input.dispatch("input"); await wait(250);
+    const hint = c.byClass("sf-empty__hint")[0].textContent;
+    assert.ok(hint.includes("режим «В этот день»") && hint.includes("поиск: «ничегонет»"), hint);
+  });
+  await test("версия: бейдж на странице со ссылкой на README; запись в README; appVersion в файле; уведомление после обновления", async () => {
+    const { VERSION } = R("app/version");
+    const readme = fs.readFileSync(path.join(SRC, "README.md"), "utf8");
+    assert.ok(readme.includes("## История версий") && readme.includes(`### v${VERSION} `), "в README нет записи для v" + VERSION);
+    assert.ok(readme.split("\n")[2].includes(VERSION), "строка версии под заголовком README устарела");
+    const c = await mkEnv({ view: "stream", id: "ver" }); await wait(40);
+    const badge = c.byClass("sf-version")[0];
+    assert.strictEqual(badge.textContent, "v" + VERSION);
+    app.opened.length = 0; badge.dispatch("click");
+    assert.ok(app.opened[0][0].endsWith("README#История версий"), app.opened[0][0]);
+    await wait(500);
+    assert.strictEqual(readDb().appVersion, VERSION);
+    // файл записан «старой» версией → после запуска показывается уведомление
+    const d = readDb(); d.appVersion = "0.5.0"; fs.writeFileSync(path.join(VAULT, ROOT, "data/social_feed.json"), JSON.stringify(d));
+    const c2 = await mkEnv({ view: "stream", id: "ver2" }); await wait(40);
+    assert.ok(c2.byClass("sf-toast").some((t) => t.textContent.includes("v0.5.0 → v" + VERSION)), "нет уведомления об обновлении");
+    // без навигации версия показана внизу страницы
+    const c3 = await mkEnv({ view: "stream", id: "ver3", nav: false }); await wait(40);
+    assert.ok(c3.byClass("sf-footer")[0].byClass("sf-version").length === 1);
+  });
+  await test("мобильная версия: классы по ширине блока, фильтры свёрнуты, подписи компактны", async () => {
+    const m = await mkEnv({ view: "stream", id: "mob1" }, 390); await wait(60);
+    const root = m.byClass("sf-root")[0];
+    assert.ok(root.classList.contains("is-mobile") && root.classList.contains("is-compact"), "is-mobile и is-compact");
+    assert.ok(m.byClass("sf-panel")[0].classList.contains("is-collapsed"), "панель фильтров на телефоне свёрнута");
+    const toggle = m.byClass("sf-panel__toggle")[0];
+    assert.ok(toggle.textContent.includes("Фильтры"), toggle.textContent);
+    toggle.click(); await wait(20);
+    assert.ok(!m.byClass("sf-panel")[0].classList.contains("is-collapsed"), "кнопка «Фильтры» раскрывает панель");
+    // дата в «В этот день» вынесена в отдельный span (скрывается на телефоне)
+    assert.ok(m.byClass("sf-quick__sub").length === 1);
+    const d = await mkEnv({ view: "stream", id: "mob2" }, 1400); await wait(60);
+    assert.ok(!d.byClass("sf-root")[0].classList.contains("is-mobile") && !d.byClass("sf-panel")[0].classList.contains("is-collapsed"), "на десктопе панель развёрнута");
+    const t = await mkEnv({ view: "stream", id: "mob3" }, 700); await wait(30);
+    assert.ok(t.byClass("sf-root")[0].classList.contains("is-compact") && !t.byClass("sf-root")[0].classList.contains("is-mobile"));
+  });
+  await test("мобильная версия: все экраны рисуются без ошибок", async () => {
+    for (const view of ["overview", "stream", "bento", "collections", "studio"]) {
+      const c = await mkEnv({ view, id: "mobv-" + view }, 390); await wait(40);
+      assert.strictEqual(c.byClass("sf-error").length, 0, view + ": " + (c.byClass("sf-error")[0] || {}).textContent);
+      assert.ok(c.byClass("sf-root")[0].classList.contains("is-mobile"));
+    }
+  });
+  await test("мобильная версия: css содержит мобильные правила; columnCount даёт 1 колонку; страница меньше", async () => {
+    const css = document.getElementById("sf-style-" + R("lib/misc").hash(ROOT)).textContent;
+    assert.ok(css.includes(".sf-root.is-mobile .sf-nav__tabs") && css.includes(".sf-root.is-mobile .sf-timeline__group") && css.includes("font-size: 16px"));
+    assert.strictEqual(R("lib/layout").columnCount(390, { columns: { min: 2, max: 4 }, minCardWidth: 320, singleColumnBelow: 560 }), 1);
+    assert.strictEqual(readDb().settings.pageSizeMobile, 12);
+  });
   await test("открытие заметки по клику на заголовок", async () => {
     const c = await mkEnv({ view: "stream", id: "open" });
+    app.opened.length = 0;
     const t = c.byClass("sf-card__title")[0]; t.dispatch("click", { ctrlKey: true });
     assert.ok(app.opened.length === 1 && app.opened[0][1] === true);
   });

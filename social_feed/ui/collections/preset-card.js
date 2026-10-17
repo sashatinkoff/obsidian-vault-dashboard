@@ -15,12 +15,13 @@ const { snippet } = require("lib/text");
 
 const stop = (fn) => (e) => { e.stopPropagation(); fn(e); };
 
-module.exports = function presetCard(ctx, preset, posts) {
-  const el = h("article", { class: "sf-preset is-clickable", title: "Открыть подборку в Бенто", onClick: () => ctx.actions.openPreset(preset, "bento") });
+module.exports = function presetCard(ctx, preset, posts, { hero = false } = {}) {
+  const el = h("article", { class: ["sf-preset", "is-clickable", hero && "sf-preset--hero"], title: "Открыть подборку в Бенто", onClick: () => ctx.actions.openPreset(preset, "bento") });
   let seed = newSeed(), expanded = false;
 
   function draw() {
     clear(el);
+    if (hero) el.append(h("span", { class: "sf-preset__glow" }));
     const { list } = pipeline.run(posts, { filter: merge(preset.filter), quick: preset.quick || "all", seed }, { config: ctx.config, flags: ctx.flags });
     const preview = list.slice(0, expanded ? 8 : 3);
     const rows = preview.map((p) => {
@@ -45,5 +46,6 @@ module.exports = function presetCard(ctx, preset, posts) {
         h("span", { class: "sf-preset__open" }, "Открыть в Бенто", icon("arrowUpRight", { size: 13 }))));
   }
   draw();
+  el.sfReady = Promise.resolve();
   return el;
 };

@@ -15,6 +15,7 @@ const NOTES = [
   { path: "notes/Twitter/2026/link.md", date: iso(6), tags: ["#dev"], body: "Читать: https://example.com/article/crdt", },
   { path: "notes/LiveJournal/2026/canvas.md", date: iso(7), tags: ["#zettelkasten", "#obsidian"], body: "Карта\n![[system_map.canvas]]", out: ["system_map.canvas"] },
   { path: "notes/LiveJournal/2025/old.md", date: lastYear, tags: ["#мысли"], body: "Заметка годичной давности. Подробно о себе и о том, что было." },
+  { path: "notes/LiveJournal/2024/ru-date.md", date: "1 октября 2024, 16:12", tags: ["#мысли"], body: "Дата в формате самих заметок." },
   { path: "notes/LiveJournal/2024/2024-03-02.md", date: null, tags: [], body: "Без даты в frontmatter, дата в имени файла." },
 ];
 

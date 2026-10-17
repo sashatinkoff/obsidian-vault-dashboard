@@ -5,6 +5,7 @@ const formulaBar = require("ui/filters/formula-bar");
 const tagBuilder = require("ui/filters/tag-builder");
 const attrToggles = require("ui/filters/attr-toggles");
 const advanced = require("ui/filters/advanced");
+const { toTokens } = require("filters/formula");
 
 module.exports = function filterPanel(ctx, { posts, variant = "stream" }) {
   const el = h("section", { class: ["sf-panel", `sf-panel--${variant}`] });
@@ -16,19 +17,26 @@ module.exports = function filterPanel(ctx, { posts, variant = "stream" }) {
   const details = h("div", { class: "sf-panel__details" }, tags.el, attrs.el, adv.el);
   const advWrap = adv.el;
 
+  const isMobile = () => !!(ctx.rootEl && ctx.rootEl.classList.contains("is-mobile"));
+  // collapsed: null = авто (на телефоне свёрнута, на десктопе развёрнута), true/false — выбор пользователя
+  const isCollapsed = () => { if (variant !== "stream") return false; const c = ctx.store.get().collapsed; return c === null || c === undefined ? isMobile() : c; };
+  const activeCount = () => toTokens(ctx.store.get().filter).filter((t) => t.t !== "paren" && t.t !== "op").length + (ctx.store.get().quick !== "all" ? 1 : 0);
+
   function draw() {
-    const collapsed = variant === "stream" && ctx.store.get().collapsed;
+    const collapsed = isCollapsed();
     el.classList.toggle("is-collapsed", collapsed);
     advWrap.style.display = showAdv ? "" : "none";
     clear(toggle);
-    toggle.append(icon("chevron", { size: 13, cls: collapsed ? "" : "sf-flip" }), collapsed ? "Развернуть панель" : "Свернуть в 1 строку");
+    const n = activeCount();
+    if (isMobile()) toggle.append(icon("filter", { size: 14 }), "Фильтры", n > 0 && h("span", { class: "sf-panel__badge" }, n), icon("chevron", { size: 13, cls: collapsed ? "" : "sf-flip" }));
+    else toggle.append(icon("chevron", { size: 13, cls: collapsed ? "" : "sf-flip" }), collapsed ? "Развернуть панель" : "Свернуть в 1 строку");
   }
-  toggle.addEventListener("click", () => ctx.actions.setCollapsed(!ctx.store.get().collapsed));
+  toggle.addEventListener("click", () => ctx.actions.setCollapsed(!isCollapsed()));
   const advBtn = h("button", { type: "button", class: "sf-btn sf-btn--ghost sf-btn--sm", onClick: () => { showAdv = !showAdv; draw(); } }, icon("sliders", { size: 13 }), "Условия");
 
   const head = h("div", { class: "sf-panel__head" }, formula.el, variant === "stream" ? h("div", { class: "sf-panel__actions" }, advBtn, toggle) : null);
   el.append(head, details);
   draw();
-  const unsub = ctx.store.subscribe(draw, ["collapsed"]);
+  const unsub = ctx.store.subscribe(draw, ["collapsed", "filter", "quick"]);
   return { el, dispose: () => { unsub(); parts.forEach((p) => p.dispose()); } };
 };

@@ -5,13 +5,24 @@ const header = require("ui/card/header");
 const footer = require("ui/card/footer");
 const bodies = require("ui/card/bodies");
 
+const INTERACTIVE = new Set(["A", "BUTTON", "INPUT", "SELECT", "TEXTAREA", "VIDEO", "AUDIO", "LABEL"]);
+// Клик по ссылке/кнопке/плееру/чипу обрабатывается самим элементом; по «пустому» месту карточки — открывает заметку.
+function isInteractive(target, root) {
+  for (let n = target; n && n !== root; n = n.parentNode) {
+    if (INTERACTIVE.has(n.tagName) || (n.classList && (n.classList.contains("sf-chip") || n.classList.contains("sf-audio__wave")))) return true;
+  }
+  return false;
+}
+const hasSelection = () => { try { const s = window.getSelection && window.getSelection(); return !!s && String(s).length > 0; } catch (e) { return false; } };
+
 module.exports = function createCard(ctx, post) {
   const el = h("article", { class: "sf-card", dataset: { path: post.path } });
   let loaded = false;
+  el.addEventListener("click", (e) => { if (!isInteractive(e.target, el) && !hasSelection()) ctx.openNote(post.path, e); });
 
   function frame() {
     clear(el);
-    el.className = ["sf-card", `sf-card--${post.type}`, ctx.flags.isPinned(post) && "is-pinned", ctx.flags.isFavorite(post) && "is-fav"].filter(Boolean).join(" ");
+    el.className = ["sf-card", "is-clickable", `sf-card--${post.type}`, ctx.flags.isPinned(post) && "is-pinned", ctx.flags.isFavorite(post) && "is-fav"].filter(Boolean).join(" ");
     const body = h("div", { class: "sf-card__body" });
     el.append(header(ctx, post, frame));
     if (post.hasOwnTitle) el.append(h("a", { class: "sf-card__title", href: "#", "data-href": post.path, onClick: (e) => { e.preventDefault(); ctx.openNote(post.path, e); } }, post.title));
