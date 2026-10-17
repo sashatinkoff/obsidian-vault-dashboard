@@ -2,6 +2,7 @@
 const { toMs, hasTime, fromFilename } = require("lib/date");
 const { toArray, pageField } = require("lib/misc");
 const { kindOf } = require("model/media-kinds");
+const { norm } = require("lib/search");
 
 const normTag = (t) => String(t || "").trim().replace(/^#+/, "").toLowerCase();
 
@@ -57,7 +58,7 @@ function createPost(page, config) {
     cover: pageField(page, ["cover", "image", "обложка"]) || null,
     tasksTotal: toArray(F.tasks).length,
     attrs: new Set(),
-    search: (String(explicitTitle || "") + " " + F.name + " " + tags.join(" ")).toLowerCase(),
+    search: norm(String(explicitTitle || "") + " " + F.name + " " + tags.join(" ")),
     feats: null, // заполняется после чтения тела (services/content)
   };
   refreshAttrs(post, config);
@@ -86,7 +87,7 @@ function refreshAttrs(post, config) {
 function enrichPost(post, feats, config) {
   post.feats = feats;
   post.words = feats.words;
-  post.searchBody = feats.text.toLowerCase();
+  post.searchBody = norm(feats.body); // весь текст заметки (без frontmatter), а не только превью
   refreshAttrs(post, config);
   return post;
 }

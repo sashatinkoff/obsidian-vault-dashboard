@@ -13,12 +13,11 @@ async function renderExcerpt(ctx, post, feats, parent, opts = {}) {
   const src = opts.quotes || opts.tasks ? bodyWithout(feats.body, opts) : feats.text;
   if (!src) return null;
   const max = opts.max || ctx.config.excerptChars;
-  const { text, truncated } = truncateMarkdown(src, max);
+  const { text } = truncateMarkdown(src, max);
   const box = h("div", { class: "sf-card__text markdown-rendered" });
   parent.append(box);
   await ctx.md.render(text, box, post.path);
   hookLinks(ctx, box, post);
-  if (truncated) parent.append(h("a", { class: "sf-card__more", href: "#", onClick: (e) => { e.preventDefault(); ctx.openNote(post.path, e); } }, "Читать далее"));
   return box;
 }
 module.exports = { renderExcerpt, bodyWithout };

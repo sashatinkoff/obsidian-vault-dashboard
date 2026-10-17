@@ -4,12 +4,14 @@
 // (в пределах допуска) — самую левую. «Широкая» плитка (wide) занимает две соседние колонки.
 const { h } = require("lib/dom");
 const { columnCount } = require("lib/layout");
+const skeletonGrid = require("ui/common/skeleton");
 
 const TOLERANCE = 14;
 
 module.exports = function tileGrid(ctx, cards, { wide = () => false, variant = "masonry" } = {}) {
   const items = cards.map((c) => h("div", { class: "sf-tilegrid__item" }, c));
-  const el = h("div", { class: ["sf-tilegrid", `sf-tilegrid--${variant}`] }, items);
+  const skel = skeletonGrid(ctx, { count: Math.min(items.length, 6) });
+  const el = h("div", { class: ["sf-tilegrid", "is-pending", `sf-tilegrid--${variant}`] }, skel, items);
   let dead = false, raf = null, ro = null, iro = null, lastW = 0;
   const width = () => el.clientWidth || (el.parentNode && el.parentNode.clientWidth) || 0;
 
@@ -38,6 +40,7 @@ module.exports = function tileGrid(ctx, cards, { wide = () => false, variant = "
       for (let k = 0; k < span; k++) hs[best + k] = bestTop + hgt + GAP;
     }
     el.style.height = Math.max(0, Math.max(...hs) - GAP) + "px";
+    if (el.classList.contains("is-pending")) { el.classList.remove("is-pending"); skel.remove(); } // первая раскладка готова — шиммеры не нужны
   }
   const schedule = () => {
     if (dead || raf) return;

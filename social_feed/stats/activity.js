@@ -38,4 +38,17 @@ function streak(byDay, now) {
   }
   return { current: cur, best };
 }
-module.exports = { countByDay, heatmap, streak };
+// Диапазоны числа заметок за день для каждого уровня цвета (для легенды): [от, до], до=null — «и больше».
+function levelRanges(max) {
+  if (max <= 0) return [[0, 0], [1, 1], [2, 2], [3, 3], [4, null]];
+  const edges = [1, 2, 3, 4].map((l) => Math.max(1, Math.floor((max * l) / 4)));
+  const out = [[0, 0]]; let from = 1;
+  for (let l = 1; l <= 4; l++) { const to = l === 4 ? null : Math.max(from, edges[l - 1]); out.push([from, to]); if (to !== null) from = to + 1; }
+  return out;
+}
+function summary(byDay) {
+  let total = 0, best = null;
+  for (const [key, n] of byDay) { total += n; if (!best || n > best.n) best = { key, n }; }
+  return { total, activeDays: byDay.size, best };
+}
+module.exports = { countByDay, heatmap, streak, levelRanges, summary };

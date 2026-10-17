@@ -1,6 +1,7 @@
 // filters/predicates.js — отдельные условия фильтра (каждое — чистая функция).
 const { inPeriod } = require("filters/periods");
 const { dayKey } = require("lib/date");
+const { norm } = require("lib/search");
 const tagHit = (postTags, wanted) => postTags.some((t) => t === wanted || t.startsWith(wanted + "/"));
 
 const predicates = {
@@ -14,7 +15,7 @@ const predicates = {
   day: (p, f) => !f.day || dayKey(p.ts) === f.day,
   backlinks: (p, f) => p.backlinks >= (f.minBacklinks || 0),
   text: (p, f) => {
-    const words = (f.text || "").trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const words = norm((f.text || "").trim()).split(/\s+/).filter(Boolean);
     return words.every((w) => p.search.includes(w) || (p.searchBody || "").includes(w));
   },
 };

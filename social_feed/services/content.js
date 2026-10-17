@@ -23,6 +23,10 @@ module.exports = function createContent({ app, config }) {
     }
     return hit.feats;
   }
-  const preload = (posts, onProgress) => mapPool(posts, config.concurrency || 8, async (p, i) => { await load(p); if (onProgress) onProgress(i + 1, posts.length); });
+  // Одна нечитаемая заметка не должна прерывать индексацию остальных.
+  const preload = (posts, onProgress) => mapPool(posts, config.concurrency || 8, async (p, i) => {
+    try { await load(p); } catch (e) { console.warn("[social_feed] не удалось прочитать", p.path, e); }
+    if (onProgress) onProgress(i + 1, posts.length);
+  });
   return { load, preload, clear: () => cache.clear() };
 };

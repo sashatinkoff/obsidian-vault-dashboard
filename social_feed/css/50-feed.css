@@ -6,11 +6,9 @@
 /* Плитки (Masonry, Bento, Подборки): абсолютное позиционирование, порядок — слева направо, затем сверху вниз */
 .sf-tilegrid { position: relative; min-width: 0; width: 100%; }
 .sf-tilegrid__item { position: absolute; top: 0; left: 0; min-width: 0; width: 100%; }
+.sf-tilegrid.is-pending .sf-tilegrid__item { visibility: hidden; }
 .sf-tilegrid__item > .sf-card, .sf-tilegrid__item > .sf-preset { width: 100%; }
 .sf-tilegrid--bento .sf-card { padding: var(--sf-pad); }
-.sf-tilegrid--bento .sf-card--quote { background: linear-gradient(160deg, var(--sf-primary-soft), var(--sf-surface) 60%); }
-.sf-tilegrid--bento .sf-card--audio { background: linear-gradient(160deg, var(--sf-tertiary-soft), var(--sf-surface) 60%); }
-.sf-tilegrid--bento .sf-card:hover { background: var(--sf-surface-hover); }
 .sf-tilegrid--bento .sf-video video { max-height: 360px; }
 
 /* Timeline: вертикальная лента по дням; внутри дня по две карточки в ряд одинаковой высоты, не помещаются — по одной */

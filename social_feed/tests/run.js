@@ -117,6 +117,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
   const types = {};
   const mkEnv = async (input, width) => {
     const container = document.createElement("div");
+    container.__attached = true;
     if (width) container.clientWidth = width;
     const dv = makeDv(container);
     await R("app/main").run({ dv, app, input, root: ROOT, container });
@@ -272,15 +273,20 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     assert.strictEqual(readDb().presets.length, before + 1);
     assert.ok(readDb().presets.some((p) => p.name === "Из меню" && p.filter.any.includes("daily")));
   });
-  await test("пульс: карточки «Добавлено фото» и «Добавлено видео»", async () => {
-    const c = await mkEnv({ view: "overview", id: "pls" });
-    const t = c.byClass("sf-stat__head").map((x) => x.textContent).join("|");
-    assert.ok(t.includes("Добавлено фото") && t.includes("Добавлено видео"), t);
+  await test("пульс месяца: 4 карточки с графиком, стрик из 7 кружков, медиа с фото и видео, теги", async () => {
+    const c = await mkEnv({ view: "overview", id: "pls" }); await wait(40);
+    const labels = c.byClass("sf-pcard__label").map((x) => x.textContent);
+    assert.deepStrictEqual(labels, ["Создано заметок", "Стрик регулярности", "Семантические связи", "Медиа за месяц"]);
+    assert.ok(c.byClass("sf-spark").length === 1 && c.byClass("sf-spark__dot").length === 1, "график накопления");
+    assert.strictEqual(c.byClass("sf-streak__day").length, 7);
+    const leg = c.byClass("sf-legend__item").map((x) => x.textContent).join("|");
+    assert.ok(leg.includes("фото") && leg.includes("видео") && leg.includes("аудио"), leg);
+    assert.ok(c.byClass("sf-tagstrip").length === 1);
   });
   await test("css: hover карточки, размер цитаты, без column-count", async () => {
     await mkEnv({ view: "stream", id: "css2" });
     const css = document.getElementById("sf-style-" + R("lib/misc").hash(ROOT)).textContent;
-    assert.ok(css.includes("--sf-quote-size: calc(17px / 1.5)") && css.includes(".sf-card:hover { background: var(--sf-surface-hover)") && !css.includes("column-count"));
+    assert.ok(css.includes("--sf-quote-size: calc(17px / 1.5)") && css.includes(".sf-card:hover { background: linear-gradient(") && !css.includes("column-count"));
   });
 
   await test("tile-grid: порядок слева направо, затем сверху вниз; широкие плитки на 2 колонки", async () => {
@@ -417,6 +423,105 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     assert.ok(css.includes(".sf-root.is-mobile .sf-nav__tabs") && css.includes(".sf-root.is-mobile .sf-timeline__group") && css.includes("font-size: 16px"));
     assert.strictEqual(R("lib/layout").columnCount(390, { columns: { min: 2, max: 4 }, minCardWidth: 320, singleColumnBelow: 560 }), 1);
     assert.strictEqual(readDb().settings.pageSizeMobile, 12);
+  });
+  await test("прокрутка: возврат восстанавливает позицию; «зажатые» значения и мёртвый виджет её не затирают", async () => {
+    global.getComputedStyle = (n) => ({ overflowY: n.__oy || "" });
+    const sess = () => window.__sfSession["::scr"];
+    const sc = document.createElement("div"); sc.__oy = "auto"; sc.__attached = true; sc.scrollHeight = 5000; sc.clientHeight = 800;
+    let top = 0;
+    Object.defineProperty(sc, "scrollTop", { get: () => top, set: (v) => { const t = Math.max(0, Math.min(v, sc.scrollHeight - sc.clientHeight)); if (t !== top) { top = t; document.dispatch("scroll", { target: sc }); } } });
+    const mount = async () => { const container = document.createElement("div"); sc.append(container); await R("app/main").run({ dv: makeDv(container), app, input: { view: "stream", id: "scr" }, root: ROOT, container }); return container; };
+
+    const c1 = await mount(); await wait(40);
+    sc.scrollTop = 1500; await wait(160);
+    assert.strictEqual(sess().scroll, 1500, "позиция пользователя сохранена");
+
+    sc.removeChild(c1);                           // Obsidian заменяет заметку: виджет мёртв…
+    sc.scrollHeight = 900; sc.scrollTop = 0;      // …страница короткая, scrollTop «зажат» в 0
+    await wait(160);
+    assert.strictEqual(sess().scroll, 1500, "зажатое значение не затёрло позицию");
+
+    const c2 = await mount();                     // возврат: страница ещё короткая, позиция недоступна
+    await wait(200);
+    assert.strictEqual(sess().scroll, 1500, "во время восстановления сохранение приостановлено");
+    sc.scrollHeight = 5000;                       // карточки дорисовались — страница выросла
+    await wait(400);
+    assert.strictEqual(sc.scrollTop, 1500, "позиция восстановлена");
+    assert.strictEqual(sess().scroll, 1500);
+
+    document.dispatch("wheel");                   // пользователь начал прокручивать сам → восстановление прекращено
+    await wait(250);
+    sc.scrollTop = 700; await wait(200);
+    assert.strictEqual(sess().scroll, 700, "после восстановления позиция снова сохраняется");
+  });
+  await test("обзор: без плиток «Пространства»; годовая карта с подписями и легендой; распределение по типам", async () => {
+    const c = await mkEnv({ view: "overview", id: "ov2" }); await wait(40);
+    assert.strictEqual(c.byClass("sf-tile").length, 0);
+    assert.ok(!c.textContent.includes("Пространства"));
+    assert.ok(c.byClass("sf-block__sub").some((x) => x.textContent.includes("Каждый квадрат — один день")), "пояснение к квадратикам");
+    assert.strictEqual(c.byClass("sf-heat__legend")[0].byClass("sf-heat__cell").length, 5);
+    assert.ok(c.byClass("sf-heat__month").length >= 10 && c.byClass("sf-heat__days")[0].textContent.includes("Пн"), "подписи месяцев и дней недели");
+    assert.ok(c.byClass("sf-donut").length === 1 && c.byClass("sf-dist__row").length >= 2);
+    const { levelRanges } = R("stats/activity");
+    assert.deepStrictEqual(levelRanges(8), [[0, 0], [1, 2], [3, 4], [5, 6], [7, null]]);
+  });
+  await test("озарения: число карточек выбирается (3/6/9/12) и запоминается", async () => {
+    const c = await mkEnv({ view: "overview", id: "ov3" }); await wait(60);
+    const items = () => c.byClass("sf-insights")[0].byClass("sf-tilegrid__item").length;
+    assert.strictEqual(items(), 3);
+    const btns = c.byClass("sf-insights__count")[0].byClass("sf-segmented__btn");
+    assert.deepStrictEqual(btns.map((b) => b.textContent), ["3", "6", "9", "12"]);
+    btns[1].click(); await wait(60);
+    assert.strictEqual(items(), 6);
+    await wait(500);
+    assert.strictEqual(readDb().ui.insightsCount, 6);
+  });
+  await test("карточка без «Читать далее»", async () => {
+    const c = await mkEnv({ view: "stream", id: "nomore", filter: { text: "утренние" } }); await wait(80);
+    assert.ok(c.byClass("sf-card__more").length === 0 && !c.textContent.includes("Читать далее"));
+  });
+  await test("навигация: нет бренда, вкладки на всю ширину шапки, 5 разделов", async () => {
+    const c = await mkEnv({ view: "stream", id: "nav2" }, 390); await wait(40);
+    const nav = c.byClass("sf-nav")[0];
+    assert.ok(!nav.textContent.includes("Journal Stream") && nav.byClass("sf-nav__brand").length === 0, "бренд-чип убран");
+    assert.strictEqual(nav.byClass("sf-nav__tab").length, 5);
+    assert.ok(nav.byClass("sf-nav__tab").some((t) => t.byClass("sf-nav__short").length === 1 && t.byClass("sf-nav__short")[0].textContent === "Фильтры"), "короткая подпись для узких экранов");
+    const css = document.getElementById("sf-style-" + R("lib/misc").hash(ROOT)).textContent;
+    assert.ok(/\.sf-nav__tabs \{[^}]*flex: 1 1 380px/.test(css) && /\.sf-nav__tab \{[^}]*flex: 1 0 auto/.test(css), "вкладки растягиваются на всю ширину");
+    assert.ok(/\.sf-root\.is-mobile \.sf-nav__tabs \{ flex: 1 0 100%/.test(css), "на телефоне вкладки — отдельной строкой");
+  });
+  await test("шиммеры: tile-grid показывает заглушку до первой раскладки; стартовая заглушка убирается", async () => {
+    const tileGrid = R("ui/feed/tile-grid");
+    const mkCard = () => { const c = document.createElement("div"); c.sfReady = Promise.resolve(); return c; };
+    const el = tileGrid({ config: { columns: { min: 2, max: 4 }, minCardWidth: 320 }, rootEl: null }, [mkCard(), mkCard()], {});
+    assert.ok(el.classList.contains("is-pending") && el.byClass("sf-skelgrid").length === 1, "до раскладки видны шиммеры");
+    el.clientWidth = 1200; await wait(60);
+    assert.ok(!el.classList.contains("is-pending") && el.byClass("sf-skelgrid").length === 0, "после раскладки шиммеры убраны");
+    el.sfDispose();
+    const container = document.createElement("div"); container.__attached = true;
+    const boot = document.createElement("div"); boot.className = "sf-boot"; container.append(boot);
+    await R("app/main").run({ dv: makeDv(container), app, input: { view: "stream", id: "boot" }, root: ROOT, container, boot });
+    await wait(30);
+    assert.strictEqual(container.byClass("sf-boot").length, 0, "стартовая заглушка удалена");
+  });
+  await test("поиск: находит по тексту заметки (после индексации), ё=е, устойчив к нечитаемой заметке", async () => {
+    const { norm } = R("lib/search");
+    assert.strictEqual(norm("ЁЛКА Ёж"), "елка еж");
+    const orig = app.vault.cachedRead;
+    app.vault.cachedRead = async (f) => { if (f.path.endsWith("link.md")) throw new Error("boom"); return orig(f); };
+    const c = await mkEnv({ view: "stream", id: "srch2" }); await wait(100);
+    const input = c.byClass("sf-search")[0].byClass("sf-input")[0];
+    input.dispatch("focus"); await wait(300);     // индексация (одна заметка нечитаема — остальные индексируются)
+    input.value = "атомарн"; input.dispatch("input"); await wait(250);
+    const n = c.byClass("sf-card").length;
+    app.vault.cachedRead = orig;
+    assert.ok(n >= 1, "найдена заметка, где слово есть только в тексте: " + n);
+    assert.ok(c.byClass("sf-search__status")[0].textContent === "", "индексация завершена");
+  });
+  await test("конструктор: строка поиска по названию или тексту есть в панели фильтров", async () => {
+    const c = await mkEnv({ view: "studio", id: "std3" });
+    const s = c.byClass("sf-panel__search")[0];
+    assert.ok(s && s.byClass("sf-input")[0].attrs.placeholder.includes("названию или тексту"));
   });
   await test("открытие заметки по клику на заголовок", async () => {
     const c = await mkEnv({ view: "stream", id: "open" });

@@ -16,13 +16,14 @@ module.exports = function createAppState({ db, config, input, session }) {
     fullWidth: !!(input.fullWidth ?? ui.fullWidth ?? config.fullWidth),
     openInNewTab: !!(input.openInNewTab ?? ui.openInNewTab ?? config.openInNewTab),
     theme: input.theme || ui.theme || config.theme,
+    insightsCount: Number(input.insightsCount ?? ui.insightsCount ?? config.insightsCount) || 3,
     quick: "all", filter: merge(input.filter), seed: newSeed(), page: 1, collapsed: null, presetId: null, draft: null,
   };
   const store = createStore(saved ? { ...fresh, ...saved, layout: normLayout(saved.layout) } : fresh);
   const restored = !!saved;
 
   store.subscribe((s) => session.patch({ state: s }));
-  store.subscribe((s) => { db.data.ui = { ...db.data.ui, layout: s.layout, fullWidth: s.fullWidth, openInNewTab: s.openInNewTab, theme: s.theme }; db.save(); }, ["layout", "fullWidth", "openInNewTab", "theme"]);
+  store.subscribe((s) => { db.data.ui = { ...db.data.ui, layout: s.layout, fullWidth: s.fullWidth, openInNewTab: s.openInNewTab, theme: s.theme, insightsCount: s.insightsCount }; db.save(); }, ["layout", "fullWidth", "openInNewTab", "theme", "insightsCount"]);
   session.patch({ state: store.get() });
   return { store, restored };
 };

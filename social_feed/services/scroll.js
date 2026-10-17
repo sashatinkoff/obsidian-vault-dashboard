@@ -1,11 +1,17 @@
 // services/scroll.js — запоминание и восстановление прокрутки заметки с виджетом.
-// • Ловим scroll на уровне документа (в capture-фазе) — не важно, какой именно контейнер прокручивается;
-// • позицию не сохраняем, пока виджет «мёртв» (при смене заметки Obsidian сбрасывает scrollTop в 0 — это не позиция пользователя);
-// • при уходе по клику на карточку позиция фиксируется заранее (leave) и дальнейшие события игнорируются.
+//
+// Почему прокрутка «терялась»: при возврате на страницу виджет строится заново, страница на миг становится короткой,
+// браузер «зажимает» scrollTop, и это значение перезаписывало сохранённую позицию ещё до восстановления. Поэтому:
+//  1) позиция (и высота виджета) фиксируются заранее — при клике по карточке (leave) и при каждой прокрутке;
+//  2) пока идёт восстановление (hold), новые значения НЕ сохраняются;
+//  3) на время восстановления высота виджета резервируется (min-height из сохранённой), чтобы страница сразу была достаточно длинной;
+//  4) восстановление повторяется и «удерживается» ещё 1.5 с — на случай, если Obsidian после рендера сам сдвинет прокрутку;
+//  5) события прокрутки от «мёртвого» виджета (заметку уже сменили) игнорируются.
 const { debounce } = require("lib/async");
 
 module.exports = function createScroll({ session, key }) {
-  let rootEl = null, cancelled = false, frozen = false;
+  let rootEl = null, cancelled = false, frozen = false, held = false, holdTimer = null;
+  const listeners = new Set();
   const alive = () => !!rootEl && rootEl.isConnected !== false && (rootEl.offsetHeight === undefined || rootEl.offsetHeight > 0);
 
   function findScroller() {
@@ -16,9 +22,9 @@ module.exports = function createScroll({ session, key }) {
     }
     return rootEl.closest ? rootEl.closest(".markdown-preview-view, .cm-scroller, .view-content") : null;
   }
+  const snapshot = (sc) => session.patch({ scroll: sc.scrollTop, height: rootEl.offsetHeight || undefined });
 
-  const listeners = new Set();
-  const save = debounce((t) => { if (!frozen && alive()) session.patch({ scroll: t.scrollTop }); }, 80);
+  const save = debounce((t) => { if (!frozen && !held && alive()) snapshot(t); }, 80);
   const onScroll = (e) => {
     const t = e.target;
     if (!(rootEl && t && t.nodeType === 1 && t.contains && t.contains(rootEl))) return;
@@ -26,7 +32,7 @@ module.exports = function createScroll({ session, key }) {
     save(t);
   };
   const onUser = () => { cancelled = true; };
-  const USER = ["wheel", "touchstart", "keydown"];
+  const USER = ["wheel", "touchmove", "keydown"];
 
   const g = (window.__sfScrollOff = window.__sfScrollOff || {});
   if (g[key]) g[key]();               // не копим слушатели при повторных перерисовках блока
@@ -36,32 +42,45 @@ module.exports = function createScroll({ session, key }) {
     g[key] = () => { document.removeEventListener("scroll", onScroll, true); USER.forEach((e) => document.removeEventListener(e, onUser, true)); };
   }
 
+  const release = () => { held = false; clearTimeout(holdTimer); };
   return {
     setRoot(el) { rootEl = el; },
     onScroll(cb) { listeners.add(cb); return () => listeners.delete(cb); },
     toTop() { const sc = findScroller(); if (!sc) return; if (sc.scrollTo) sc.scrollTo({ top: 0, behavior: "smooth" }); else sc.scrollTop = 0; },
-    // Карточки дорисовываются асинхронно — повторяем попытки, пока страница не станет достаточно высокой.
-    restore(top) {
-      if (!top) return;
-      cancelled = false; frozen = false;
-      const t0 = Date.now();
+
+    // Приостановить сохранение позиции (вызывается до построения интерфейса, если предстоит восстановление).
+    hold() { held = true; clearTimeout(holdTimer); holdTimer = setTimeout(release, 14000); },
+
+    // Восстановить позицию: повторяем, пока страница не станет достаточно высокой, затем удерживаем 1.5 с.
+    restore(top, onDone) {
+      held = true; cancelled = false; frozen = false;
+      clearTimeout(holdTimer); holdTimer = setTimeout(release, 14000);
+      const t0 = Date.now(); let okSince = 0;
+      const finish = () => { release(); if (onDone) onDone(); };
       const tick = () => {
-        if (cancelled) return;
+        if (!top || cancelled) return finish();
         const sc = findScroller();
-        if (sc) { sc.scrollTop = top; if (Math.abs(sc.scrollTop - top) < 2) return; }
-        if (Date.now() - t0 < 8000) setTimeout(tick, 120);
+        if (sc) {
+          if (Math.abs(sc.scrollTop - top) >= 2) { sc.scrollTop = top; okSince = 0; }
+          else if (!okSince) okSince = Date.now();
+        }
+        if (okSince && Date.now() - okSince > 1500) return finish();
+        if (Date.now() - t0 > 10000) return finish();
+        setTimeout(tick, 120);
       };
       tick();
     },
-    // Уходим со страницы (клик по карточке): зафиксировать позицию и больше её не менять.
-    leave() { const sc = findScroller(); if (sc && alive()) session.patch({ scroll: sc.scrollTop }); frozen = true; },
+
+    // Уходим со страницы (клик по карточке): зафиксировать позицию и высоту и больше их не менять.
+    leave() { const sc = findScroller(); if (sc && alive() && !held) snapshot(sc); frozen = true; },
+
     // Вход в раздел: показать верх блока.
     toBlockTop() {
       const sc = findScroller();
       if (!sc || !rootEl.getBoundingClientRect) return;
       const delta = rootEl.getBoundingClientRect().top - sc.getBoundingClientRect().top;
       if (delta < 0) sc.scrollTop += delta - 8;
-      session.patch({ scroll: sc.scrollTop });
+      snapshot(sc);
     },
   };
 };

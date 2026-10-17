@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "appVersion": "1.1.0",
+  "appVersion": "1.2.0",
   "settings": {
     "sources": [
       {
@@ -56,8 +56,15 @@
     "excerptChars": 420,
     "randomCount": 12,
     "insightsCount": 3,
+    "insightsOptions": [
+      3,
+      6,
+      9,
+      12
+    ],
     "topTags": 24,
     "concurrency": 8,
+    "autoIndex": true,
     "deepScan": false,
     "showSourceBadge": false,
     "dql": {
@@ -67,8 +74,9 @@
   "ui": {
     "layout": "masonry",
     "fullWidth": true,
-    "openInNewTab": false,
-    "theme": "dark"
+    "openInNewTab": true,
+    "theme": "dark",
+    "insightsCount": 12
   },
   "presets": [
     {

@@ -3,6 +3,7 @@ const { h, clear } = require("lib/dom");
 const nav = require("ui/common/nav");
 const scrollTopButton = require("ui/common/scroll-top");
 const versionBadge = require("ui/common/version-badge");
+const skeletonGrid = require("ui/common/skeleton");
 const views = require("views");
 
 async function mountShell(ctx, container) {
@@ -23,6 +24,14 @@ async function mountShell(ctx, container) {
     return mobile;
   }
   let wasMobile = applySize();
+
+  // Возврат на страницу: позицию читаем ДО построения интерфейса, высоту резервируем, сохранение позиции приостанавливаем.
+  const s0 = ctx.restored ? ctx.session.get() : null;
+  const targetScroll = (s0 && s0.scroll) || 0;
+  if (targetScroll) {
+    if (s0.height) root.style.minHeight = s0.height + "px";
+    ctx.scroll.hold();
+  }
   root.append(...(config.nav ? [nav(ctx)] : []), region, ...(config.nav ? [] : [h("div", { class: "sf-footer" }, "Journal Stream ", versionBadge(ctx))]), scrollTopButton(ctx));
 
   // Область заметки (в ней живёт «полная ширина»). Класс снимается при уходе со страницы.
@@ -55,6 +64,12 @@ async function mountShell(ctx, container) {
     clear(region);
     const view = views.get(store.get().view);
     root.dataset.sfView = view.id;
+    // Пока экран строится — шиммеры карточек; стартовую заглушку из view.js убираем, как только появились эти
+    region.append(skeletonGrid(ctx, { count: 6 }));
+    if (ctx.boot && ctx.boot.remove) { ctx.boot.remove(); ctx.boot = null; }
+    await new Promise((r) => setTimeout(r, 0)); // отдать кадр браузеру, чтобы шиммеры успели отрисоваться до тяжёлой работы
+    if (my !== token) return;
+    clear(region);
     try {
       const d = await view.render(ctx, region);
       if (my === token) dispose = d; else if (d) d();
@@ -68,6 +83,6 @@ async function mountShell(ctx, container) {
   store.subscribe(show, ["view"]);
   await show();
   // Вернулись на страницу — возвращаем прокрутку (карточки дорисовываются, поэтому восстановление с повторами).
-  if (ctx.restored) { const s = ctx.session.get(); if (s && s.scroll) ctx.scroll.restore(s.scroll); }
+  if (targetScroll) ctx.scroll.restore(targetScroll, () => { root.style.minHeight = ""; });
 }
 module.exports = { mountShell };

@@ -5,7 +5,8 @@
 /* ---------- compact: < 900px ---------- */
 .sf-root.is-compact .sf-studio { grid-template-columns: 1fr; }
 .sf-root.is-compact .sf-studio__side { position: static; }
-.sf-root.is-compact .sf-tiles, .sf-root.is-compact .sf-insights { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sf-root.is-compact .sf-pulse__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sf-root.is-compact .sf-yearly { grid-template-columns: 1fr; }
 .sf-root.is-compact .sf-toolbar__controls { width: 100%; }
 .sf-root.is-compact .sf-search { flex: 1 1 240px; }
 
@@ -25,14 +26,11 @@
 .sf-root.is-mobile .sf-chip { height: 30px; padding: 0 12px; }
 .sf-root.is-mobile .sf-chip--rule { height: 24px; padding: 0 8px; }
 
-/* навигация: строка 1 — бренд и переключатели, строка 2 — вкладки с горизонтальной прокруткой */
-.sf-root.is-mobile .sf-nav { flex-wrap: wrap; gap: 8px; padding-bottom: 8px; margin-bottom: 4px; }
-.sf-root.is-mobile .sf-nav__brand { padding: 4px 10px; }
-.sf-root.is-mobile .sf-nav__brand > span, .sf-root.is-mobile .sf-nav__unfold { display: none; }
-.sf-root.is-mobile .sf-nav__right { margin-left: auto; }
-.sf-root.is-mobile .sf-nav__tabs { order: 3; flex: 1 0 100%; justify-content: flex-start; margin: 0 -12px; padding: 2px 12px; scroll-snap-type: x proximity; scrollbar-width: none; }
-.sf-root.is-mobile .sf-nav__tabs::-webkit-scrollbar { display: none; }
-.sf-root.is-mobile .sf-nav__tab { padding: 9px 14px; min-height: 38px; scroll-snap-align: start; }
+/* навигация: вкладки — отдельной строкой на всю ширину, ниже справа — версия и переключатели */
+.sf-root.is-mobile .sf-nav { gap: 6px; padding-bottom: 8px; margin-bottom: 4px; }
+.sf-root.is-mobile .sf-nav__tabs { flex: 1 0 100%; }
+.sf-root.is-mobile .sf-nav__tab { padding: 10px 6px; min-height: 40px; font-size: 12px; }
+.sf-root.is-mobile .sf-nav__fullbtn { display: none; }  /* на телефоне блок и так на всю ширину */
 .sf-root.is-mobile .sf-themebtn { width: 38px; height: 38px; padding: 0; justify-content: center; }
 .sf-root.is-mobile .sf-themebtn span { display: none; }
 
@@ -92,17 +90,18 @@
 .sf-root.is-mobile .sf-timeline__items { grid-template-columns: minmax(0, 1fr); border-left: 0; padding-left: 0; margin-left: 0; }
 
 /* обзор */
-.sf-root.is-mobile .sf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.sf-root.is-mobile .sf-stats .sf-stat:first-child { grid-column: 1 / -1; }
-.sf-root.is-mobile .sf-stat { padding: 12px; }
-.sf-root.is-mobile .sf-stat__value { font-size: 26px; line-height: 32px; }
-.sf-root.is-mobile .sf-stat__unit { font-size: 12px; }
-.sf-root.is-mobile .sf-stat__sub { font-size: 11px; }
-.sf-root.is-mobile .sf-insights { grid-template-columns: 1fr; }
-.sf-root.is-mobile .sf-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.sf-root.is-mobile .sf-tile { padding: 12px; }
-.sf-root.is-mobile .sf-heat__wrap { padding: 12px; }
+.sf-root.is-mobile .sf-pulse__grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+.sf-root.is-mobile .sf-pulse__grid .sf-pcard:first-child { grid-column: 1 / -1; }
+.sf-root.is-mobile .sf-pcard { padding: 14px; }
+.sf-root.is-mobile .sf-pcard__value { font-size: 26px; line-height: 32px; }
+.sf-root.is-mobile .sf-tagstrip { flex-direction: column; align-items: flex-start; }
+.sf-root.is-mobile .sf-yearly { grid-template-columns: 1fr; }
+.sf-root.is-mobile .sf-card-block { padding: 14px; border-radius: var(--sf-r-lg); }
 .sf-root.is-mobile .sf-heat__cell { width: 10px; height: 10px; }
+.sf-root.is-mobile .sf-heat__months { grid-template-columns: repeat(53, 10px); }
+.sf-root.is-mobile .sf-dist { flex-direction: column; align-items: stretch; }
+.sf-root.is-mobile .sf-insights__tools { width: 100%; justify-content: space-between; }
+.sf-root.is-mobile .sf-section__row { flex-wrap: wrap; }
 
 /* подборки */
 .sf-root.is-mobile .sf-hero--row { flex-direction: column; align-items: stretch; }

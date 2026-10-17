@@ -8,6 +8,7 @@ class Node_ {
   append(...items) { for (const i of items) this.appendChild(typeof i === "object" && i && i.nodeType ? i : new Text_(String(i))); }
   removeChild(n) { const i = this.childNodes.indexOf(n); if (i >= 0) { this.childNodes.splice(i, 1); n.parentNode = null; } return n; }
   remove() { if (this.parentNode) this.parentNode.removeChild(this); }
+  get isConnected() { let t = this; while (t.parentNode) t = t.parentNode; return t === global.document.body || !!t.__attached; }
   contains(n) { for (let c = n; c; c = c.parentNode) if (c === this) return true; return false; }
   get textContent() { return this.childNodes.map((c) => c.textContent).join(""); }
   set textContent(v) { this.childNodes = []; if (v) this.appendChild(new Text_(String(v))); }
@@ -38,7 +39,8 @@ class El extends Node_ {
 }
 function install() {
   const head = new El("head"), body = new El("body");
-  global.document = { createElement: (t) => new El(t), createTextNode: (t) => new Text_(String(t)), head, body, activeElement: null, getElementById: (id) => head.find((n) => (n.id || n.attrs.id) === id)[0] || null, execCommand: () => true };
+  const L = {};
+  global.document = { addEventListener: (t, f) => (L[t] = L[t] || []).push(f), removeEventListener: (t, f) => { L[t] = (L[t] || []).filter((x) => x !== f); }, dispatch: (t, ev = {}) => (L[t] || []).slice().forEach((f) => f({ target: null, ...ev })), createElement: (t) => new El(t), createTextNode: (t) => new Text_(String(t)), head, body, activeElement: null, getElementById: (id) => head.find((n) => (n.id || n.attrs.id) === id)[0] || null, execCommand: () => true };
   global.window = global.window || {};
   try { global.navigator = global.navigator || { clipboard: { writeText: async () => {} } }; } catch (e) {}
   return { El, Text_ };

@@ -27,6 +27,7 @@ module.exports = function createActions(ctx) {
     setFullWidth: (fullWidth) => store.set({ fullWidth }),
     setOpenInNewTab: (openInNewTab) => store.set({ openInNewTab }),
     setTheme: (theme) => store.set({ theme }),
+    setInsightsCount: (insightsCount) => store.set({ insightsCount }),
     setLayout: (layout) => store.set({ layout }),
     setCollapsed: (collapsed) => store.set({ collapsed }),
     nextPage: () => store.set({ page: store.get().page + 1 }),
@@ -45,6 +46,7 @@ module.exports = function createActions(ctx) {
       else store.set({ ...clean(), filter: toggleTag(defaultFilter(), "any", tag), view: "stream" });
     },
     jumpToTag(tag) { store.set({ ...clean(), filter: toggleTag(defaultFilter(), "any", tag), view: "stream" }); },
+    jumpToType(type) { store.set({ ...clean(), filter: merge(null, { types: [type] }), view: "stream" }); },
     jumpToDay(day) { store.set({ ...clean(), filter: merge(null, { day }), view: "stream" }); },
   };
 };

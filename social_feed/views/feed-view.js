@@ -13,15 +13,19 @@ module.exports = function createFeedView({ id, title, icon, fixedLayout }) {
       const { store, config } = ctx;
       const posts = ctx.repo.collect();
 
-      const tb = toolbar(ctx, { title, posts, withLayouts: !fixedLayout, onRefresh: () => { ctx.repo.refresh(); ctx.content.clear(); ctx.indexed = false; ctx.reload(); } });
+      const tb = toolbar(ctx, { title, posts, withLayouts: !fixedLayout, onRefresh: () => { ctx.repo.refresh(); ctx.content.clear(); ctx.indexer.reset(); ctx.reload(); } });
       const qb = quickbar(ctx, { posts });
       const fp = filterPanel(ctx, { posts, variant: "stream" });
       const region = h("div", { class: "sf-feed-region" });
       el.append(tb.el, qb.el, fp.el, region);
 
       let current = null;
+      let keepTimer = null;
       function drawFeed() {
         const s = store.get();
+        // Пока лента перестраивается, держим прежнюю высоту — иначе страница «схлопывается» и прокрутка прыгает вверх.
+        const prevH = region.offsetHeight;
+        if (prevH) { region.style.minHeight = prevH + "px"; clearTimeout(keepTimer); keepTimer = setTimeout(() => { region.style.minHeight = ""; }, 700); }
         const { list } = pipeline.run(posts, s, { config, flags: ctx.flags });
         tb.setCount(list.length);
         if (current && current.sfDispose) current.sfDispose();
@@ -30,14 +34,16 @@ module.exports = function createFeedView({ id, title, icon, fixedLayout }) {
         region.append(current);
       }
       drawFeed();
-      const unsub = store.subscribe(drawFeed, ["filter", "quick", "seed", "layout", "page"]);
+      let unsub = store.subscribe(drawFeed, ["filter", "quick", "seed", "layout", "page"]);
 
-      // deepScan: фоновая индексация тел заметок (точные типы/цитаты, поиск по тексту)
-      if (config.deepScan && !ctx.indexed) {
-        ctx.indexed = true;
-        ctx.content.preload(posts).then(drawFeed).catch((e) => console.warn("[social_feed] deepScan", e));
+      // Фоновая индексация текстов (поиск по тексту, точные типы/цитаты): сразу при deepScan, иначе — когда браузер свободен
+      if (config.deepScan || config.autoIndex !== false) {
+        const start = () => ctx.indexer.ensure(posts).then(drawFeed).catch((e) => console.warn("[social_feed] индексация", e));
+        const t = setTimeout(start, config.deepScan ? 0 : 600);
+        const prev = unsub;
+        unsub = () => { clearTimeout(t); prev(); };
       }
-      return () => { unsub(); if (current && current.sfDispose) current.sfDispose(); tb.dispose(); qb.dispose(); fp.dispose(); };
+      return () => { clearTimeout(keepTimer); unsub(); if (current && current.sfDispose) current.sfDispose(); tb.dispose(); qb.dispose(); fp.dispose(); };
     },
   };
 };

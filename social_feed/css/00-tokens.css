@@ -21,6 +21,8 @@
   --sf-secondary: #6001d1;
   --sf-secondary-container: #eaddff;
   --sf-on-secondary-container: #25005a;
+  --sf-secondary-soft: rgba(96, 1, 209, 0.07);
+  --sf-tint: var(--sf-primary-soft);   /* оттенок градиента карточки; у типов (аудио, видео…) переопределяется */
   --sf-tertiary: #00658a;
   --sf-tertiary-soft: rgba(0, 101, 138, 0.1);
   --sf-danger: #ba1a1a;
@@ -65,6 +67,7 @@ body.theme-dark .sf-root[data-sf-theme="auto"] {
   --sf-secondary: #d2bbff;
   --sf-secondary-container: #6001d1;
   --sf-on-secondary-container: #c9aeff;
+  --sf-secondary-soft: rgba(210, 187, 255, 0.1);
   --sf-tertiary: #7bd0ff;
   --sf-tertiary-soft: rgba(123, 208, 255, 0.12);
   --sf-danger: #ffb4ab;

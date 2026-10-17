@@ -5,12 +5,16 @@ const formulaBar = require("ui/filters/formula-bar");
 const tagBuilder = require("ui/filters/tag-builder");
 const attrToggles = require("ui/filters/attr-toggles");
 const advanced = require("ui/filters/advanced");
+const searchBar = require("ui/filters/search-bar");
 const { toTokens } = require("filters/formula");
 
 module.exports = function filterPanel(ctx, { posts, variant = "stream" }) {
   const el = h("section", { class: ["sf-panel", `sf-panel--${variant}`] });
-  const parts = [formulaBar(ctx), tagBuilder(ctx, { posts }), attrToggles(ctx), advanced(ctx, { withSearch: variant === "studio" })];
+  const parts = [formulaBar(ctx), tagBuilder(ctx, { posts }), attrToggles(ctx), advanced(ctx)];
   const [formula, tags, attrs, adv] = parts;
+  // В конструкторе строка поиска — первой в панели (в ленте и бенто она в шапке экрана)
+  const search = variant === "studio" ? searchBar(ctx, { posts, cls: "sf-search--panel" }) : null;
+  if (search) parts.push(search);
   let showAdv = variant === "studio";
 
   const toggle = h("button", { type: "button", class: "sf-btn sf-btn--ghost sf-btn--sm sf-panel__toggle" });
@@ -35,7 +39,7 @@ module.exports = function filterPanel(ctx, { posts, variant = "stream" }) {
   const advBtn = h("button", { type: "button", class: "sf-btn sf-btn--ghost sf-btn--sm", onClick: () => { showAdv = !showAdv; draw(); } }, icon("sliders", { size: 13 }), "Условия");
 
   const head = h("div", { class: "sf-panel__head" }, formula.el, variant === "stream" ? h("div", { class: "sf-panel__actions" }, advBtn, toggle) : null);
-  el.append(head, details);
+  el.append(...(search ? [h("div", { class: "sf-panel__search" }, search.el)] : []), head, details);
   draw();
   const unsub = ctx.store.subscribe(draw, ["collapsed", "filter", "quick"]);
   return { el, dispose: () => { unsub(); parts.forEach((p) => p.dispose()); } };
