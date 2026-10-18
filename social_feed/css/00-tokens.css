@@ -1,6 +1,6 @@
 /* 00-tokens.css — дизайн-токены по dashboard.html (тональные слои без рамок). Тёмная и светлая темы.
    Всё оформление берётся отсюда. Тема: config.theme / кнопка в навигации; auto — по теме Obsidian. */
-.sf-root {
+.sf-root, .sf-fab {
   /* светлая тема (вариация той же палитры) */
   --sf-canvas: #fbf8fd;            /* surface */
   --sf-surface: #f5f2f8;           /* surface-container-low — карточки */
@@ -18,6 +18,8 @@
   --sf-primary-line: rgba(132, 43, 210, 0.28);
   --sf-primary-fill: #842bd2;      /* заливка главной кнопки */
   --sf-primary-on: #ffffff;
+  --sf-accent-grad: linear-gradient(135deg, #a766f2 0%, #842bd2 100%);               /* заливка активных кнопок */
+  --sf-accent-soft: linear-gradient(135deg, rgba(132, 43, 210, 0.16), rgba(132, 43, 210, 0.04)); /* неактивные кнопки */
   --sf-secondary: #6001d1;
   --sf-secondary-container: #eaddff;
   --sf-on-secondary-container: #25005a;
@@ -46,8 +48,8 @@
   --sf-font-mono: "JetBrains Mono", var(--font-monospace), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-.sf-root[data-sf-theme="dark"],
-body.theme-dark .sf-root[data-sf-theme="auto"] {
+.sf-root[data-sf-theme="dark"], .sf-fab[data-sf-theme="dark"],
+body.theme-dark .sf-root[data-sf-theme="auto"], body.theme-dark .sf-fab[data-sf-theme="auto"] {
   --sf-canvas: #131315;
   --sf-surface: #1b1b1d;
   --sf-surface-2: #1f1f21;
@@ -64,6 +66,8 @@ body.theme-dark .sf-root[data-sf-theme="auto"] {
   --sf-primary-line: rgba(221, 183, 255, 0.28);
   --sf-primary-fill: #ddb7ff;
   --sf-primary-on: #490080;
+  --sf-accent-grad: linear-gradient(135deg, #f0dbff 0%, #ddb7ff 45%, #b76dff 100%);
+  --sf-accent-soft: linear-gradient(135deg, rgba(221, 183, 255, 0.2), rgba(221, 183, 255, 0.05));
   --sf-secondary: #d2bbff;
   --sf-secondary-container: #6001d1;
   --sf-on-secondary-container: #c9aeff;

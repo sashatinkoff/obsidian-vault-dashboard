@@ -4,6 +4,7 @@ const nav = require("ui/common/nav");
 const scrollTopButton = require("ui/common/scroll-top");
 const versionBadge = require("ui/common/version-badge");
 const skeletonGrid = require("ui/common/skeleton");
+const watchObsidianTheme = require("services/theme-watch");
 const views = require("views");
 
 async function mountShell(ctx, container) {
@@ -16,11 +17,19 @@ async function mountShell(ctx, container) {
 
   // Размер блока → классы: is-compact (< 900px), is-mobile (< singleColumnBelow, по умолчанию 560px — один столбец).
   // Считаем по ширине самого блока, а не окна: так работает и в узкой боковой панели.
+  // Принудительный вид (кнопки в навигации): mobile — как на телефоне (один столбец, узкая «рамка»), desktop — как на компьютере
+  // даже на узком экране (колонки по config.columns, блок не уже 760px). auto — по ширине блока.
+  const baseSingle = config.singleColumnBelow ?? 560;
   const sizeOf = () => root.clientWidth || container.clientWidth || 0;
   function applySize() {
-    const w = sizeOf(), mobile = w > 0 && w < (config.singleColumnBelow || 560);
-    root.classList.toggle("is-compact", w > 0 && w < 900);
+    const mode = store.get().viewMode || "auto", w = sizeOf();
+    const mobile = mode === "mobile" ? true : mode === "desktop" ? false : w > 0 && w < baseSingle;
+    const compact = mode === "mobile" ? true : mode === "desktop" ? false : w > 0 && w < 900;
+    config.singleColumnBelow = mode === "mobile" ? 100000 : mode === "desktop" ? 0 : baseSingle; // читает раскладка плиток
+    root.classList.toggle("is-compact", compact);
     root.classList.toggle("is-mobile", mobile);
+    root.classList.toggle("is-forced-mobile", mode === "mobile");
+    root.classList.toggle("is-forced-desktop", mode === "desktop");
     return mobile;
   }
   let wasMobile = applySize();
@@ -32,7 +41,8 @@ async function mountShell(ctx, container) {
     if (s0.height) root.style.minHeight = s0.height + "px";
     ctx.scroll.hold();
   }
-  root.append(...(config.nav ? [nav(ctx)] : []), region, ...(config.nav ? [] : [h("div", { class: "sf-footer" }, "Journal Stream ", versionBadge(ctx))]), scrollTopButton(ctx));
+  root.append(...(config.nav ? [nav(ctx)] : []), region, ...(config.nav ? [] : [h("div", { class: "sf-footer" }, "Journal Stream ", versionBadge(ctx))]));
+  scrollTopButton(ctx); // самостоятельная fixed-кнопка в <body>
 
   // Область заметки (в ней живёт «полная ширина»). Класс снимается при уходе со страницы.
   const host = container.closest ? container.closest(".markdown-preview-view, .markdown-source-view, .view-content") : null;
@@ -45,6 +55,8 @@ async function mountShell(ctx, container) {
   }
   applyLook();
   store.subscribe(applyLook, ["fullWidth", "theme"]);
+  watchObsidianTheme(ctx);
+  store.subscribe(() => { wasMobile = applySize(); show(); }, ["viewMode"]);
 
   // Obsidian переиспользует контейнер заметки при навигации: если виджет исчез (ушли в другую заметку любым способом) —
   // снимаем с контейнера класс полной ширины, чтобы новая заметка отображалась как обычно.

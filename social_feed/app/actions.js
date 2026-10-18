@@ -24,9 +24,13 @@ module.exports = function createActions(ctx) {
     toggleAttr: (a) => setFilter({ attrs: toggleIn(filter().attrs, a) }),
     toggleType: (t) => setFilter({ types: toggleIn(filter().types, t) }),
     toggleSource: (s) => setFilter({ sources: toggleIn(filter().sources, s) }),
+    // Направление сортировки по времени: по умолчанию «сначала новые» (date-desc); любая другая сортировка → сначала новые
+    toggleSortDir: () => setFilter({ sort: filter().sort === "date-desc" ? "date-asc" : "date-desc" }),
     setFullWidth: (fullWidth) => store.set({ fullWidth }),
     setOpenInNewTab: (openInNewTab) => store.set({ openInNewTab }),
     setTheme: (theme) => store.set({ theme }),
+    // Повторный клик по активной кнопке возвращает автоопределение по ширине
+    setViewMode: (mode) => store.set({ viewMode: store.get().viewMode === mode ? "auto" : mode }),
     setInsightsCount: (insightsCount) => store.set({ insightsCount }),
     setLayout: (layout) => store.set({ layout }),
     setCollapsed: (collapsed) => store.set({ collapsed }),
@@ -46,7 +50,11 @@ module.exports = function createActions(ctx) {
       else store.set({ ...clean(), filter: toggleTag(defaultFilter(), "any", tag), view: "stream" });
     },
     jumpToTag(tag) { store.set({ ...clean(), filter: toggleTag(defaultFilter(), "any", tag), view: "stream" }); },
-    jumpToType(type) { store.set({ ...clean(), filter: merge(null, { types: [type] }), view: "stream" }); },
+    // Клик по типу в диаграмме обзора: в фильтрах остались только атрибуты — ставим соответствующий атрибут (иначе, для «текста» и canvas, — тип)
+    jumpToType(type) {
+      const attr = { image: "photo", video: "video", audio: "audio", quote: "quote", tasks: "task", link: "link" }[type];
+      store.set({ ...clean(), filter: merge(null, attr ? { attrs: [attr] } : { types: [type] }), view: "stream" });
+    },
     jumpToDay(day) { store.set({ ...clean(), filter: merge(null, { day }), view: "stream" }); },
   };
 };

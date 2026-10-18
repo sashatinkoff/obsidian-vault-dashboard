@@ -19,11 +19,13 @@ module.exports = function nav(ctx) {
           h("span", { class: "sf-nav__full" }, v.title), v.short && h("span", { class: "sf-nav__short" }, v.short)))),
       h("div", { class: "sf-nav__right" },
         versionBadge(ctx),
+        iconButton({ name: "phone", title: s.viewMode === "mobile" ? "Мобильный вид включён — нажмите, чтобы вернуть автоопределение" : "Показать мобильный вид (один столбец)", active: s.viewMode === "mobile", onClick: () => ctx.actions.setViewMode("mobile") }),
+        iconButton({ name: "monitor", title: s.viewMode === "desktop" ? "Десктопный вид включён — нажмите, чтобы вернуть автоопределение" : "Показать десктопный вид (колонки, широкая шапка)", active: s.viewMode === "desktop", onClick: () => ctx.actions.setViewMode("desktop") }),
         iconButton({ name: "newtab", title: s.openInNewTab ? "Заметки открываются в новой вкладке" : "Открывать заметки в новой вкладке", active: s.openInNewTab, onClick: () => ctx.actions.setOpenInNewTab(!s.openInNewTab) }),
         iconButton({ name: s.fullWidth ? "shrink" : "expand", title: s.fullWidth ? "Обычная ширина" : "На всю ширину", active: s.fullWidth, cls: "sf-nav__fullbtn", onClick: () => ctx.actions.setFullWidth(!s.fullWidth) }),
-        h("button", { type: "button", class: "sf-themebtn", title: "Сменить тему: тёмная / светлая", onClick: () => ctx.actions.setTheme(dark ? "light" : "dark") }, icon(dark ? "moon" : "sun", { size: 16 }), h("span", null, dark ? "Тёмная" : "Светлая"))));
+        h("button", { type: "button", class: "sf-themebtn", "aria-label": dark ? "Тёмная тема" : "Светлая тема", onClick: () => ctx.actions.setTheme(dark ? "light" : "dark") }, icon(dark ? "moon" : "sun", { size: 16 }))));
   }
   draw();
-  ctx.store.subscribe(draw, ["view", "fullWidth", "openInNewTab", "theme"]);
+  ctx.store.subscribe(draw, ["view", "fullWidth", "openInNewTab", "theme", "viewMode"]);
   return el;
 };

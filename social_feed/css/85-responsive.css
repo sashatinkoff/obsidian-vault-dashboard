@@ -9,6 +9,8 @@
 .sf-root.is-compact .sf-yearly { grid-template-columns: 1fr; }
 .sf-root.is-compact .sf-toolbar__controls { width: 100%; }
 .sf-root.is-compact .sf-search { flex: 1 1 240px; }
+.sf-root.is-compact .sf-date .sf-date__input { width: 118px; }
+.sf-root.is-compact .sf-daterange { flex-wrap: wrap; }
 
 /* ---------- mobile: один столбец ---------- */
 .sf-root.is-mobile { padding: 12px 12px calc(16px + env(safe-area-inset-bottom)); border-radius: var(--sf-r-lg); font-size: 15px; -webkit-tap-highlight-color: transparent; }
@@ -30,16 +32,22 @@
 .sf-root.is-mobile .sf-nav { gap: 6px; padding-bottom: 8px; margin-bottom: 4px; }
 .sf-root.is-mobile .sf-nav__tabs { flex: 1 0 100%; }
 .sf-root.is-mobile .sf-nav__tab { padding: 10px 6px; min-height: 40px; font-size: 12px; }
-.sf-root.is-mobile .sf-nav__fullbtn { display: none; }  /* на телефоне блок и так на всю ширину */
-.sf-root.is-mobile .sf-themebtn { width: 38px; height: 38px; padding: 0; justify-content: center; }
-.sf-root.is-mobile .sf-themebtn span { display: none; }
+.sf-root.is-mobile .sf-nav__right .sf-iconbtn, .sf-root.is-mobile .sf-toolbar__controls .sf-iconbtn { width: 38px; height: 38px; }
+.sf-root.is-mobile .sf-themebtn { width: 38px; height: 38px; }
+.sf-root.is-mobile .sf-sortbtn { height: 42px; padding: 0 12px; }
+.sf-root.is-mobile .sf-sortbtn span { display: none; }
+.sf-root.is-mobile .sf-tagtab { padding: 7px 12px; }
 
 /* шапка экрана: заголовок, затем поиск на всю ширину, ниже — подборки · раскладка · обновить */
 .sf-root.is-mobile .sf-toolbar { gap: 10px; }
 .sf-root.is-mobile .sf-toolbar__title { width: 100%; }
 .sf-root.is-mobile .sf-crumbs__sync { display: none; }
-.sf-root.is-mobile .sf-toolbar__controls { position: relative; width: 100%; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; }
+.sf-root.is-mobile .sf-toolbar__controls { position: relative; width: 100%; display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 8px; }
 .sf-root.is-mobile .sf-search { grid-column: 1 / -1; min-width: 0; flex: none; }
+.sf-root.is-mobile .sf-search .sf-input-wrap { flex: 1 1 100%; }
+.sf-root.is-mobile .sf-daterange { width: 100%; }
+.sf-root.is-mobile .sf-date { flex: 1; min-width: 0; }
+.sf-root.is-mobile .sf-date .sf-date__input { width: 100%; font-size: 16px; }
 .sf-root.is-mobile .sf-dropdown { position: static; }
 .sf-root.is-mobile .sf-dropdown > .sf-btn { width: 100%; justify-content: center; background: var(--sf-surface-2); }
 .sf-root.is-mobile .sf-segmented__btn { padding: 8px 10px; }
@@ -124,6 +132,13 @@
 
 /* служебное */
 .sf-root.is-mobile .sf-toast { bottom: calc(76px + env(safe-area-inset-bottom)); width: calc(100% - 32px); text-align: center; }
-.sf-root.is-mobile .sf-totop { bottom: calc(20px + env(safe-area-inset-bottom)); }
-.sf-root.is-mobile .sf-totop__btn { width: 46px; height: 46px; }
 .sf-root.is-mobile .sf-footer { padding-top: 8px; }
+
+/* ---------- принудительный вид (кнопки 📱 / 🖥 в навигации) ---------- */
+/* Мобильный вид на широком экране: узкая «рамка» по центру, один столбец */
+.sf-root.is-forced-mobile { max-width: 430px; margin-inline: auto; box-shadow: 0 0 0 1px var(--sf-line), var(--sf-glow); }
+/* Десктопный вид на узком экране: блок не уже 760px (страницу можно прокрутить вбок), колонки по config.columns */
+.sf-root.is-forced-desktop { min-width: 760px; }
+
+.sf-fab__btn { touch-action: manipulation; }
+@media (max-width: 767px) { .sf-fab__btn { width: 48px; height: 48px; } }

@@ -12,6 +12,8 @@ function ruleChips(preset) {
   if (f.types.length) chips.push("тип: " + f.types.join(", "));
   if (f.minBacklinks > 0) chips.push("связи: > " + (f.minBacklinks - 1));
   if (periods[f.period] && f.period !== "all") chips.push("период: " + periods[f.period].label.toLowerCase());
+  if (f.dateFrom) chips.push("с " + f.dateFrom);
+  if (f.dateTo) chips.push("по " + f.dateTo);
   if (preset.quick === "today") chips.push("в этот день");
   if (preset.quick === "random") chips.push("рандом");
   if (preset.quick === "favorites") chips.push("избранное");

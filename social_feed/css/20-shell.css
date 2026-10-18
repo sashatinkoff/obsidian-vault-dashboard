@@ -1,20 +1,24 @@
 /* 20-shell.css — верхняя панель (как header в dashboard), шапка экрана, сегменты. */
 
 
-/* Навигация: вкладки на всю ширину шапки, справа версия и переключатели. Если места мало — вторая строка. */
+/* Навигация и верхние кнопки: скруглённые «пилюли» в цвет акцента с градиентом.
+   Неактивные — мягкий градиент, активная — полная заливка градиентом. Вкладки растянуты на всю ширину шапки. */
 .sf-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 4px 0 var(--sf-gutter); margin-bottom: var(--sf-gutter); }
-.sf-nav__tabs { display: flex; flex: 1 1 380px; min-width: 0; gap: 4px; padding: 4px; background: var(--sf-surface); border-radius: var(--sf-r-lg); overflow-x: auto; scrollbar-width: none; }
+.sf-nav__tabs { display: flex; flex: 1 1 380px; min-width: 0; gap: 8px; padding: 2px; overflow-x: auto; scrollbar-width: none; }
 .sf-nav__tabs::-webkit-scrollbar { display: none; }
-.sf-nav__tab { flex: 1 0 auto; min-width: 64px; padding: 8px 14px; border-radius: var(--sf-r); text-align: center; color: var(--sf-text-2); font-family: var(--sf-font-mono); font-size: 12px; font-weight: 500; white-space: nowrap; transition: background 0.15s, color 0.15s; }
-.sf-nav__tab:hover { background: var(--sf-surface-3); color: var(--sf-text); }
-.sf-nav__tab.is-active { background: var(--sf-surface-4); color: var(--sf-primary); font-weight: 700; }
+.sf-nav__tab { flex: 1 0 auto; min-width: 64px; padding: 9px 18px; border-radius: var(--sf-r-pill); text-align: center; background: var(--sf-accent-soft), var(--sf-surface-2); color: var(--sf-primary); box-shadow: inset 0 0 0 1px var(--sf-primary-soft); font-family: var(--sf-font-mono); font-size: 12px; font-weight: 500; white-space: nowrap; transition: box-shadow 0.15s, filter 0.15s, transform 0.15s; }
+.sf-nav__tab:hover { box-shadow: inset 0 0 0 1px var(--sf-primary-line); filter: brightness(1.1); }
+.sf-nav__tab.is-active { background: var(--sf-accent-grad); color: var(--sf-primary-on); box-shadow: var(--sf-glow); font-weight: 700; }
 .sf-nav__tab .sf-nav__short { display: none; }
 .sf-root.is-compact .sf-nav__tab.has-short .sf-nav__full { display: none; }
 .sf-root.is-compact .sf-nav__tab.has-short .sf-nav__short { display: inline; }
-.sf-nav__right { display: flex; align-items: center; gap: 4px; margin-left: auto; flex: none; }
-.sf-themebtn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: var(--sf-r-pill); background: var(--sf-surface-2); color: var(--sf-text-2); font-family: var(--sf-font-mono); font-size: 12px; box-shadow: inset 0 0 0 1px var(--sf-primary-soft); transition: background 0.15s; }
-.sf-themebtn:hover { background: var(--sf-surface-3); color: var(--sf-text); }
-.sf-themebtn .sf-icon { color: var(--sf-primary); }
+.sf-nav__right { display: flex; align-items: center; gap: 6px; margin-left: auto; flex: none; }
+.sf-nav__right .sf-iconbtn, .sf-toolbar__controls .sf-iconbtn { width: 34px; height: 34px; border-radius: 50%; background: var(--sf-accent-soft), var(--sf-surface-2); color: var(--sf-primary); box-shadow: inset 0 0 0 1px var(--sf-primary-soft); }
+.sf-nav__right .sf-iconbtn:hover, .sf-toolbar__controls .sf-iconbtn:hover { box-shadow: inset 0 0 0 1px var(--sf-primary-line); filter: brightness(1.1); }
+.sf-nav__right .sf-iconbtn.is-active { background: var(--sf-accent-grad); color: var(--sf-primary-on); box-shadow: var(--sf-glow); }
+.sf-themebtn { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border-radius: 50%; background: var(--sf-accent-soft), var(--sf-surface-2); color: var(--sf-primary); box-shadow: inset 0 0 0 1px var(--sf-primary-soft); transition: box-shadow 0.15s, filter 0.15s; }
+.sf-themebtn:hover { box-shadow: inset 0 0 0 1px var(--sf-primary-line); filter: brightness(1.1); }
+.sf-toolbar__controls > .sf-dropdown > .sf-btn { border-radius: var(--sf-r-pill); background: var(--sf-accent-soft), var(--sf-surface-2); color: var(--sf-primary); box-shadow: inset 0 0 0 1px var(--sf-primary-soft); }
 
 .sf-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sf-gutter); flex-wrap: wrap; }
 .sf-toolbar__spacer { flex: 1; }
@@ -27,12 +31,17 @@
 .sf-crumbs__sync { display: inline-flex; align-items: center; gap: 4px; color: var(--sf-text-3); text-transform: none; letter-spacing: 0.02em; }
 @keyframes sf-ping { 50% { opacity: 0.35; } }
 
-.sf-segmented { display: inline-flex; gap: 2px; padding: 4px; border-radius: var(--sf-r); background: var(--sf-surface); }
-.sf-segmented__btn { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: var(--sf-r-sm); color: var(--sf-text-3); font-family: var(--sf-font-mono); font-size: 11px; transition: all 0.15s; }
-.sf-segmented__btn:hover { color: var(--sf-text); }
-.sf-segmented__btn.is-active { background: var(--sf-surface-2); color: var(--sf-primary); }
+.sf-segmented { display: inline-flex; gap: 6px; padding: 0; background: none; }
+.sf-segmented__btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: var(--sf-r-pill); background: var(--sf-accent-soft), var(--sf-surface-2); color: var(--sf-primary); box-shadow: inset 0 0 0 1px var(--sf-primary-soft); font-family: var(--sf-font-mono); font-size: 11px; transition: box-shadow 0.15s, filter 0.15s; }
+.sf-segmented__btn:hover { box-shadow: inset 0 0 0 1px var(--sf-primary-line); filter: brightness(1.1); }
+.sf-segmented__btn.is-active { background: var(--sf-accent-grad); color: var(--sf-primary-on); box-shadow: var(--sf-glow); }
 
 /* Бейдж версии (ссылка на «Историю версий» в README) */
-.sf-version { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--sf-r-pill); background: var(--sf-surface-2); color: var(--sf-text-3); font-family: var(--sf-font-mono); font-size: 11px; letter-spacing: 0.02em; transition: background 0.15s, color 0.15s; }
+.sf-version { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: var(--sf-r-pill); background: var(--sf-accent-soft), var(--sf-surface-2); color: var(--sf-primary); font-family: var(--sf-font-mono); font-size: 11px; letter-spacing: 0.02em; transition: background 0.15s, color 0.15s; }
 .sf-version:hover { background: var(--sf-surface-3); color: var(--sf-primary); }
 .sf-footer { display: flex; align-items: center; justify-content: center; gap: 6px; padding-top: var(--sf-gutter); font-family: var(--sf-font-mono); font-size: 11px; color: var(--sf-text-3); }
+
+/* Порядок по времени: «Новые ↓» / «Старые ↑» */
+.sf-sortbtn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: var(--sf-r-pill); background: var(--sf-accent-soft), var(--sf-surface-2); color: var(--sf-primary); box-shadow: inset 0 0 0 1px var(--sf-primary-soft); font-family: var(--sf-font-mono); font-size: 12px; transition: box-shadow 0.15s, filter 0.15s; }
+.sf-sortbtn:hover { box-shadow: inset 0 0 0 1px var(--sf-primary-line); filter: brightness(1.1); }
+.sf-sortbtn.is-asc { background: var(--sf-accent-grad); color: var(--sf-primary-on); box-shadow: var(--sf-glow); }

@@ -4,6 +4,8 @@ const { h, clear } = require("lib/dom");
 const { icon } = require("lib/icons");
 const { tagCounts } = require("stats/tags");
 const { tagMode, normTag } = require("filters/state");
+const { shuffle, newSeed } = require("lib/random");
+const { DAY, sameMonthDay } = require("lib/date");
 const chip = require("ui/common/chip");
 
 const MODES = [
@@ -22,9 +24,25 @@ function suggestTags(all, query, limit = 8) {
 
 module.exports = function tagBuilder(ctx, { posts }) {
   const el = h("div", { class: "sf-tagbuilder" });
-  const topCounts = tagCounts(posts, { limit: ctx.config.topTags });
   const allTags = tagCounts(posts, { limit: Infinity });
-  let mode = "any", active = -1, shown = [];
+  const limit = ctx.config.topTags;
+  let mode = "any", active = -1, shown = [], tab = "top", seed = newSeed();
+
+  // «Подкладки» с наборами тегов: что показывать чипами под полем ввода
+  const TABS = [
+    { id: "top", label: "Топ", title: "Самые частые теги" },
+    { id: "random", label: "Случайные", title: "Случайная выборка тегов — нажмите ещё раз, чтобы перемешать" },
+    { id: "year", label: "За год", title: "Самые частые теги за последние 12 месяцев" },
+    { id: "today", label: "Этот день", title: "Теги заметок, написанных в этот день в прошлые годы" },
+  ];
+  function tagSet() {
+    const now = Date.now(), thisYear = new Date(now).getFullYear();
+    if (tab === "random") return shuffle(allTags, seed).slice(0, limit);
+    if (tab === "year") return tagCounts(posts.filter((p) => p.ts >= now - 365 * DAY && p.ts <= now + DAY), { limit });
+    if (tab === "today") return tagCounts(posts.filter((p) => sameMonthDay(p.ts, now) && new Date(p.ts).getFullYear() < thisYear), { limit });
+    return allTags.slice(0, limit);
+  }
+  const EMPTY = { year: "За последние 12 месяцев заметок с тегами нет.", today: "В прошлые годы в этот день заметок с тегами нет.", random: "В выбранных источниках нет тегов.", top: "В выбранных источниках нет тегов." };
 
   // --- постоянная часть (не перерисовывается, чтобы поле ввода не теряло фокус и клавиатура не закрывалась)
   const modeRow = h("div", { class: "sf-tagbuilder__modes" });
@@ -70,25 +88,34 @@ module.exports = function tagBuilder(ctx, { posts }) {
   h("button", { type: "submit", class: "sf-iconbtn sf-tagadd__btn", title: "Добавить тег" }, icon("plus", { size: 16 })), sug);
 
   const head = h("div", { class: "sf-tagbuilder__head" }, h("span", { class: "sf-tagbuilder__title" }, "Теги"), modeRow, form);
+  const tabsEl = h("div", { class: "sf-tagtabs", role: "tablist", "aria-label": "Наборы тегов" });
   const wrap = h("div", { class: "sf-tagbuilder__tags" });
-  el.append(head, wrap);
+  el.append(head, tabsEl, wrap);
 
   function drawModes() {
     clear(modeRow);
     MODES.forEach((m) => modeRow.append(h("button", { type: "button", class: ["sf-modebtn", `sf-modebtn--${m.id}`, m.id === mode && "is-active"], onClick: () => { mode = m.id; drawModes(); drawChips(); } }, m.label)));
   }
+  function drawTabs() {
+    clear(tabsEl);
+    TABS.forEach((t) => tabsEl.append(h("button", { type: "button", role: "tab", title: t.title, "aria-selected": t.id === tab ? "true" : "false", class: ["sf-tagtab", t.id === tab && "is-active"],
+      onClick: () => { if (tab === t.id && t.id === "random") seed = newSeed(); tab = t.id; drawTabs(); drawChips(); } },
+    t.id === "random" && icon("dice", { size: 12 }), t.label)));
+  }
   function drawChips() {
     clear(wrap);
-    const f = ctx.store.get().filter;
-    // выбранные теги всегда видны, даже если их нет среди самых частых
-    const extra = [...f.any, ...f.all, ...f.not].filter((t) => !topCounts.some((c) => c.tag === t)).map((t) => ({ tag: t, count: (allTags.find((c) => c.tag === t) || {}).count }));
-    for (const { tag, count } of [...topCounts, ...extra]) {
+    const f = ctx.store.get().filter, set = tagSet();
+    // выбранные теги всегда видны первыми (даже если их нет в выбранном наборе)
+    const selected = [...f.any, ...f.all, ...f.not].map((t) => ({ tag: t, count: (allTags.find((c) => c.tag === t) || {}).count }));
+    const rest = set.filter((c) => !selected.some((s) => s.tag === c.tag));
+    if (!set.length && !selected.length) { wrap.append(h("span", { class: "sf-muted" }, EMPTY[tab])); return; }
+    for (const { tag, count } of [...selected, ...rest]) {
       const m = tagMode(f, tag);
       wrap.append(chip({ text: "#" + tag, count, kind: m === "not" ? "not" : "tag", active: !!m, onClick: () => ctx.actions.toggleTag(mode, tag), title: m ? `в режиме ${m.toUpperCase()} — тап, чтобы снять` : `добавить как ${mode.toUpperCase()}` }));
     }
-    if (!wrap.children.length) wrap.append(h("span", { class: "sf-muted" }, "В выбранных источниках нет тегов."));
+    if (!rest.length) wrap.append(h("span", { class: "sf-muted" }, EMPTY[tab]));
   }
-  drawModes(); drawChips();
+  drawModes(); drawTabs(); drawChips();
   const dispose = ctx.store.subscribe(() => { drawChips(); if (sug.style.display !== "none") drawSuggest(); }, ["filter"]);
   return { el, dispose };
 };

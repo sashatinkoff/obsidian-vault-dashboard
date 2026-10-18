@@ -115,7 +115,8 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
 
   console.log("\nsmoke (UI на заглушке DOM)");
   const types = {};
-  const mkEnv = async (input, width) => {
+  const mkEnv = async (input0, width) => {
+    const input = { viewMode: "auto", ...input0 };
     const container = document.createElement("div");
     container.__attached = true;
     if (width) container.clientWidth = width;
@@ -160,7 +161,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     const c = await mkEnv({ view: "stream", id: "fw" });
     const root = c.byClass("sf-root")[0];
     assert.ok(root.classList.contains("is-full"), "по умолчанию — на всю ширину");
-    c.byClass("sf-nav__right")[0].byClass("sf-iconbtn")[1].click(); await new Promise((r) => setTimeout(r, 20));
+    c.byClass("sf-nav__right")[0].byClass("sf-iconbtn").find((b) => b.attrs.title.includes("ширину") || b.attrs.title.includes("Обычная")).click(); await new Promise((r) => setTimeout(r, 20));
     assert.ok(!root.classList.contains("is-full"));
     const c2 = await mkEnv({ view: "stream", id: "fw2", fullWidth: false });
     assert.ok(!c2.byClass("sf-root")[0].classList.contains("is-full"));
@@ -263,7 +264,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     dd.byClass("sf-btn")[0].click();
     assert.ok(dd.byClass("sf-menu__item").length >= 3);
     dd.byClass("sf-menu__item").find((b) => b.textContent.includes("Цитаты")).click(); await wait(60);
-    assert.ok(c.byClass("sf-feed").length === 1 && c.byClass("sf-formula__body")[0].textContent.includes("подборка: Цитаты") && c.byClass("sf-formula__body")[0].textContent.includes("тип: quote"));
+    assert.ok(c.byClass("sf-feed").length === 1 && c.byClass("sf-formula__body")[0].textContent.includes("подборка: Цитаты") && c.byClass("sf-formula__body")[0].textContent.split("Цитаты").length >= 3, "условие подборки (атрибут «Цитаты») видно в формуле");
     c.byClass("sf-chip").find((x) => x.textContent.startsWith("#daily") && x.classList.contains("is-clickable")).click(); await wait(40);
     dd.byClass("sf-btn")[0].click(); dd.byClass("sf-btn")[0].click();
     const before = readDb().presets.length;
@@ -343,9 +344,35 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     input.value = "новыйтег"; c.byClass("sf-tagadd")[0].dispatch("submit"); await wait(30);
     assert.ok(c.byClass("sf-formula__body")[0].textContent.includes("#новыйтег"), "submit формы добавляет тег");
   });
-  await test("кнопка «Наверх» есть на странице", async () => {
-    const c = await mkEnv({ view: "stream", id: "totop" });
-    assert.ok(c.byClass("sf-totop").length === 1 && c.byClass("sf-totop")[0].classList.contains("is-hidden"));
+  await test("кнопка «Наверх»: fixed в <body>, появляется после прокрутки, возвращает наверх, не плодится", async () => {
+    global.getComputedStyle = (n) => ({ overflowY: n.__oy || "" });
+    const sc = document.createElement("div"); sc.className = "markdown-preview-view"; sc.__oy = "auto"; sc.__attached = true; sc.scrollHeight = 6000; sc.clientHeight = 800;
+    let top = 0;
+    Object.defineProperty(sc, "scrollTop", { get: () => top, set: (v) => { const t = Math.max(0, Math.min(v, sc.scrollHeight - sc.clientHeight)); if (t !== top) { top = t; document.dispatch("scroll", { target: sc }); } } });
+    const mount = async () => { const container = document.createElement("div"); sc.append(container); await R("app/main").run({ dv: makeDv(container), app, input: { view: "stream", id: "fab", viewMode: "auto" }, root: ROOT, container }); return container; };
+    await mount(); await wait(60);
+    const fabs = () => document.body.children.filter((n) => n.classList.contains("sf-fab") && n.isConnected);
+    const first = fabs().at(-1);
+    assert.ok(first && first.classList.contains("is-hidden"), "наверху кнопка скрыта");
+    assert.strictEqual(first.parentNode, document.body, "кнопка в <body> (fixed), а не sticky внутри виджета");
+    sc.scrollTop = 900; await wait(30);
+    assert.ok(!first.classList.contains("is-hidden"), "после прокрутки вниз кнопка видна");
+    first.byClass("sf-fab__btn")[0].click(); await wait(30);
+    assert.strictEqual(sc.scrollTop, 0, "клик возвращает наверх");
+    assert.ok(first.classList.contains("is-hidden"), "наверху снова скрыта");
+    sc.scrollTop = 900;
+    sc.children.forEach((ch) => sc.removeChild(ch));
+    await mount(); await wait(60);
+    assert.strictEqual(first.parentNode, null, "при перерисовке блока старая кнопка убрана");
+    assert.strictEqual(fabs().filter((n) => n !== first).length >= 1, true);
+  });
+  await test("картинки: centerCrop и никаких hover-эффектов; токены темы доступны кнопке в <body>", async () => {
+    const css = document.getElementById("sf-style-" + R("lib/misc").hash(ROOT)).textContent;
+    assert.ok(/\.sf-images \{[^}]*aspect-ratio: 16 \/ 10/.test(css), "рамка фиксированных пропорций");
+    assert.ok(/\.sf-images__cell img \{[^}]*position: absolute; inset: 0;[^}]*object-fit: cover; object-position: 50% 50%/.test(css), "centerCrop");
+    assert.ok(!/\.sf-images__cell:hover img/.test(css) && !css.includes("brightness(1.08); } /* без масштабирования"), "hover-эффект на картинке убран");
+    assert.ok(/\.sf-card img \{[^}]*transform: none !important[^}]*filter: none !important/.test(css));
+    assert.ok(css.includes('.sf-fab[data-sf-theme="dark"]'));
   });
   await test("дата и время как в заметке: «1 октября 2024, 16:12»", async () => {
     const D = R("lib/date");
@@ -360,7 +387,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     app.opened.length = 0;
     c.byClass("sf-card__title")[0].dispatch("click");
     assert.strictEqual(app.opened[0][1], false);
-    c.byClass("sf-nav__right")[0].byClass("sf-iconbtn")[0].click(); await wait(20);
+    c.byClass("sf-nav__right")[0].byClass("sf-iconbtn").find((b) => b.attrs.title.includes("вкладк")).click(); await wait(20);
     c.byClass("sf-card__title")[0].dispatch("click");
     assert.strictEqual(app.opened[1][1], true, "в новой вкладке после включения");
   });
@@ -404,8 +431,9 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     assert.ok(toggle.textContent.includes("Фильтры"), toggle.textContent);
     toggle.click(); await wait(20);
     assert.ok(!m.byClass("sf-panel")[0].classList.contains("is-collapsed"), "кнопка «Фильтры» раскрывает панель");
-    // дата в «В этот день» вынесена в отдельный span (скрывается на телефоне)
-    assert.ok(m.byClass("sf-quick__sub").length === 1);
+    // «В этот день» — без даты
+    const today = m.byClass("sf-quick--today")[0];
+    assert.ok(today.textContent.startsWith("В этот день") && !/\d{1,2} [а-я]+/.test(today.textContent.replace(/\d+$/, "")) && m.byClass("sf-quick__sub").length === 0, today.textContent);
     const d = await mkEnv({ view: "stream", id: "mob2" }, 1400); await wait(60);
     assert.ok(!d.byClass("sf-root")[0].classList.contains("is-mobile") && !d.byClass("sf-panel")[0].classList.contains("is-collapsed"), "на десктопе панель развёрнута");
     const t = await mkEnv({ view: "stream", id: "mob3" }, 700); await wait(30);
@@ -522,6 +550,157 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     const c = await mkEnv({ view: "studio", id: "std3" });
     const s = c.byClass("sf-panel__search")[0];
     assert.ok(s && s.byClass("sf-input")[0].attrs.placeholder.includes("названию или тексту"));
+  });
+  await test("прокрутка: промежуточная обёртка с overflow:auto не сбивает позицию (клик по карточке не сохраняет 0)", async () => {
+    global.getComputedStyle = (n) => ({ overflowY: n.__oy || "" });
+    const sess = () => window.__sfSession["::scr2"];
+    // настоящий скроллер Obsidian (.markdown-preview-view) → «ложная» обёртка (overflow:auto, но не прокручивается) → виджет
+    const sc = document.createElement("div"); sc.className = "markdown-preview-view"; sc.__oy = "auto"; sc.__attached = true; sc.scrollHeight = 5000; sc.clientHeight = 800;
+    let top = 0;
+    Object.defineProperty(sc, "scrollTop", { get: () => top, set: (v) => { const t = Math.max(0, Math.min(v, sc.scrollHeight - sc.clientHeight)); if (t !== top) { top = t; document.dispatch("scroll", { target: sc }); } } });
+    const wrap = document.createElement("div"); wrap.__oy = "auto"; wrap.scrollHeight = 0; wrap.clientHeight = 0; wrap.scrollTop = 0; sc.append(wrap);
+    const mount = async () => { const container = document.createElement("div"); wrap.append(container); await R("app/main").run({ dv: makeDv(container), app, input: { view: "stream", id: "scr2" }, root: ROOT, container }); return container; };
+
+    const c1 = await mount(); await wait(60);
+    sc.scrollTop = 1500; await wait(160);
+    assert.strictEqual(sess().scroll, 1500);
+    c1.byClass("sf-card__title")[0].dispatch("click");     // клик по карточке → leave()
+    assert.strictEqual(sess().scroll, 1500, "позиция не затёрта нулём обёртки");
+    assert.strictEqual(sess().scrollerSel, "markdown-preview-view", "запомнен настоящий контейнер прокрутки");
+
+    wrap.removeChild(c1); sc.scrollHeight = 900; sc.scrollTop = 0; await wait(160);   // Obsidian сменил заметку
+    const c2 = await mount(); await wait(150);                                       // возврат: страница ещё короткая
+    sc.scrollHeight = 5000; await wait(450);                                         // карточки дорисовались
+    assert.strictEqual(sc.scrollTop, 1500, "позиция восстановлена на настоящем контейнере, а не на обёртке");
+    assert.strictEqual(wrap.scrollTop, 0);
+  });
+  await test("вид: кнопки «мобильный» / «десктопный» включают и выключают принудительный вид", async () => {
+    const c = await mkEnv({ view: "stream", id: "vm1" }, 1400); await wait(50);
+    const root = c.byClass("sf-root")[0];
+    const btn = (title) => c.byClass("sf-nav__right")[0].byClass("sf-iconbtn").find((b) => b.attrs.title.includes(title));
+    assert.ok(!root.classList.contains("is-mobile"));
+    btn("мобильный вид").click(); await wait(80);
+    assert.ok(root.classList.contains("is-mobile") && root.classList.contains("is-forced-mobile") && root.classList.contains("is-compact"), "мобильный вид включён на широком экране");
+    assert.ok(c.byClass("sf-panel")[0].classList.contains("is-collapsed"), "фильтры свёрнуты, как на телефоне");
+    btn("Мобильный вид включён").click(); await wait(80);
+    assert.ok(!root.classList.contains("is-mobile") && !root.classList.contains("is-forced-mobile"), "повторный клик — авто");
+    await wait(300);
+    assert.strictEqual(readDb().ui.viewMode, "auto");
+
+    const m = await mkEnv({ view: "stream", id: "vm2" }, 390); await wait(50);
+    const mroot = m.byClass("sf-root")[0];
+    assert.ok(mroot.classList.contains("is-mobile"));
+    m.byClass("sf-nav__right")[0].byClass("sf-iconbtn").find((b) => b.attrs.title.includes("десктопный вид")).click(); await wait(80);
+    assert.ok(!mroot.classList.contains("is-mobile") && mroot.classList.contains("is-forced-desktop"), "десктопный вид на узком экране");
+    const L = R("lib/layout");
+    assert.strictEqual(L.columnCount(390, { columns: { min: 2, max: 4 }, minCardWidth: 320, singleColumnBelow: 0 }), 2, "в десктопном виде колонок не меньше 2");
+    assert.strictEqual(L.columnCount(1600, { columns: { min: 2, max: 4 }, minCardWidth: 320, singleColumnBelow: 100000 }), 1, "в мобильном виде — один столбец");
+  });
+  await test("верхние кнопки: скруглённые, в цвет акцента, градиент; кнопки вида и ширины доступны и на телефоне", async () => {
+    const css = document.getElementById("sf-style-" + R("lib/misc").hash(ROOT)).textContent;
+    assert.ok(/--sf-accent-grad: linear-gradient/.test(css) && /--sf-accent-soft: linear-gradient/.test(css));
+    assert.ok(/\.sf-nav__tab\.is-active \{ background: var\(--sf-accent-grad\)/.test(css), "активная вкладка — градиент акцента");
+    assert.ok(/\.sf-nav__tab \{[^}]*border-radius: var\(--sf-r-pill\)[^}]*var\(--sf-accent-soft\)/.test(css), "неактивные — скруглённые с мягким градиентом");
+    assert.ok(/\.sf-btn--primary \{ background: var\(--sf-accent-grad\)/.test(css));
+    assert.ok(!css.includes(".sf-nav__fullbtn { display: none"), "кнопка ширины не скрыта на телефоне");
+    const m = await mkEnv({ view: "stream", id: "btn390" }, 390); await wait(40);
+    assert.strictEqual(m.byClass("sf-nav__right")[0].byClass("sf-iconbtn").length, 4, "на телефоне все 4 кнопки-иконки на месте (вид ×2, вкладка, ширина)");
+  });
+  await test("фильтр дат: «от» и «до» независимы (предикат, формула, DQL, подборки)", () => {
+    const { applyFilter } = R("filters/engine"), S = R("filters/state"), Q = R("filters/dql"), F = R("filters/formula"), P = R("filters/presets");
+    const at = (y, m, d, hh = 12) => new Date(y, m - 1, d, hh).getTime();
+    const ps = [mk({ ts: at(2024, 3, 2) }), mk({ ts: at(2024, 10, 1, 16) }), mk({ ts: at(2024, 12, 31, 23) }), mk({ ts: at(2025, 5, 5) })];
+    const n = (f) => applyFilter(ps, S.merge(f)).length;
+    assert.deepStrictEqual([n({}), n({ dateFrom: "2024-10-01" }), n({ dateTo: "2024-10-01" }), n({ dateFrom: "2024-10-01", dateTo: "2024-12-31" }), n({ dateTo: "2024-12-31" })], [4, 3, 2, 2, 3], "границы включительно, каждая работает сама по себе");
+    assert.ok(!S.isDefault({ dateFrom: "2024-01-01" }));
+    const toks = F.toTokens(S.merge({ dateFrom: "2024-01-01", dateTo: "2024-12-31" })).filter((t) => t.t === "cond").map((t) => t.v);
+    assert.deepStrictEqual(toks, ["с 2024-01-01", "по 2024-12-31"]);
+    const q = Q.compile(S.merge({ dateFrom: "2024-06-01", dateTo: "2024-06-30" }), { config: { sources: [] } }).query;
+    assert.ok(q.includes('file.cday >= date("2024-06-01")') && q.includes('file.cday < date("2024-07-01")'), q);
+    assert.deepStrictEqual(P.ruleChips({ filter: { dateFrom: "2024-06-01" } }), ["с 2024-06-01"]);
+  });
+  await test("фильтр дат в поиске: любое из трёх полей сразу применяет фильтр", async () => {
+    const c = await mkEnv({ view: "stream", id: "dates" }); await wait(80);
+    const cards = () => c.byClass("sf-card").length;
+    const [from, to] = c.byClass("sf-search")[0].byClass("sf-date__input");
+    assert.ok(from && to && c.byClass("sf-search")[0].byClass("sf-input")[0].attrs.type === "search");
+    assert.strictEqual(cards(), 11);
+    to.value = "2024-12-31"; to.dispatch("change"); await wait(80);
+    assert.strictEqual(cards(), 2, "только «до»");
+    from.value = "2024-06-01"; from.dispatch("input"); await wait(80);
+    assert.strictEqual(cards(), 1, "«от» + «до»");
+    assert.ok(c.byClass("sf-formula__body")[0].textContent.includes("с 2024-06-01") && c.byClass("sf-formula__body")[0].textContent.includes("по 2024-12-31"));
+    to.value = ""; to.dispatch("change"); await wait(80);
+    assert.strictEqual(cards(), 10, "только «от»");
+    const text = c.byClass("sf-search")[0].byClass("sf-input")[0];
+    text.value = "стрим"; text.dispatch("input"); await wait(250);   // текст + «от» вместе
+    assert.ok(cards() <= 1, "текст работает вместе с датой: " + cards());
+    text.value = ""; text.dispatch("input"); from.value = ""; from.dispatch("change"); await wait(250);
+    assert.strictEqual(cards(), 11, "всё очищено");
+  });
+  await test("теги: «подкладки» Топ · Случайные · За год · Этот день", async () => {
+    const c = await mkEnv({ view: "stream", id: "tt" }, 1400); await wait(60);
+    const tabs = () => c.byClass("sf-tagtab");
+    assert.deepStrictEqual(tabs().map((t) => t.textContent), ["Топ", "Случайные", "За год", "Этот день"]);
+    assert.ok(tabs()[0].classList.contains("is-active"));
+    const chips = () => c.byClass("sf-tagbuilder__tags")[0].byClass("sf-chip").map((x) => x.textContent);
+    assert.ok(chips().some((t) => t.startsWith("#daily")), "топ: самые частые теги");
+    tabs()[3].click(); await wait(20);
+    const today = chips();
+    assert.ok(today.some((t) => t.startsWith("#мысли")) && !today.some((t) => t.startsWith("#daily")), "этот день: теги заметок прошлых лет в эту дату — " + today.join(","));
+    tabs()[2].click(); await wait(20);
+    assert.ok(chips().some((t) => t.startsWith("#daily")), "за год");
+    tabs()[1].click(); await wait(20);
+    assert.ok(tabs()[1].classList.contains("is-active") && chips().length >= 3, "случайные");
+    chips(); c.byClass("sf-tagbuilder__tags")[0].byClass("sf-chip")[0].dispatch("click"); await wait(40);
+    tabs()[0].click(); await wait(20);
+    assert.ok(c.byClass("sf-tagbuilder__tags")[0].byClass("sf-chip")[0].classList.contains("is-active"), "выбранный тег остаётся первым при смене набора");
+  });
+  await test("сортировка по времени: «Новые» по умолчанию, переключатель «Старые»", async () => {
+    const c = await mkEnv({ view: "stream", id: "srt" }, 1400); await wait(80);
+    const btn = c.byClass("sf-sortbtn")[0];
+    assert.strictEqual(btn.textContent, "Новые");
+    const first = () => c.byClass("sf-card__date")[0].textContent;
+    const newest = first();
+    btn.click(); await wait(80);
+    assert.strictEqual(btn.textContent, "Старые");
+    assert.strictEqual(first(), "2 марта 2024", "сначала самые старые: " + first());
+    btn.click(); await wait(80);
+    assert.strictEqual(btn.textContent, "Новые");
+    assert.strictEqual(first(), newest);
+  });
+  await test("фильтры: только атрибуты (ряд «Тип» убран); «FORMULA» убрано; переключатели панели — иконки", async () => {
+    const c = await mkEnv({ view: "stream", id: "fl2" }, 1400); await wait(60);
+    assert.deepStrictEqual(c.byClass("sf-attrs__label").map((x) => x.textContent), ["Атрибуты:"]);
+    assert.ok(!c.textContent.includes("FORMULA") && c.byClass("sf-formula__label").length === 0);
+    assert.strictEqual(c.byClass("sf-panel__toggle")[0].textContent, "", "переключатель панели — только иконка");
+    assert.ok(!c.textContent.includes("Свернуть в 1 строку") && !c.textContent.includes("Развернуть панель") && !c.textContent.includes("Условия"));
+    assert.ok(readDb().presets.find((p) => p.id === "voice" ? true : false).filter.attrs.includes("audio"), "новые подборки используют атрибуты");
+  });
+  await test("кнопка темы: только иконка, без подсказки и подписи", async () => {
+    const c = await mkEnv({ view: "stream", id: "thm" }); await wait(40);
+    const b = c.byClass("sf-themebtn")[0];
+    assert.ok(b.attrs.title === undefined && b.textContent === "" && b.byClass("sf-icon").length === 1);
+  });
+  await test("смена темы Obsidian сбрасывает выбор темы в виджете на «auto»", async () => {
+    let captured = []; global.MutationObserver = class { constructor(cb) { this.cb = cb; captured.push(this); } observe() {} disconnect() {} };
+    document.body.classList.add("theme-dark");
+    const c = await mkEnv({ view: "stream", id: "thm2", theme: undefined }); await wait(40);
+    const root = c.byClass("sf-root")[0];
+    c.byClass("sf-themebtn")[0].click(); await wait(20);
+    assert.strictEqual(root.dataset.sfTheme, "light", "выбор темы в виджете: светлая (при тёмной теме Obsidian)");
+    document.body.classList.remove("theme-dark"); document.body.classList.add("theme-light");   // пользователь переключил тему Obsidian
+    captured.at(-1).cb(); await wait(20);
+    assert.strictEqual(root.dataset.sfTheme, "auto", "выбор сброшен на глобальную тему");
+    await wait(450);
+    assert.strictEqual(readDb().ui.theme, "auto");
+    document.body.classList.remove("theme-light"); delete global.MutationObserver;
+  });
+  await test("без фона у виджета и защита от горизонтальной прокрутки (планшет)", async () => {
+    const css = document.getElementById("sf-style-" + R("lib/misc").hash(ROOT)).textContent;
+    assert.ok(/\.sf-root \{[^}]*background: var\(--sf-root-bg, transparent\)/.test(css), "фон виджета прозрачный");
+    assert.ok(/\.sf-root \{[^}]*overflow-x: clip/.test(css) && css.includes(".sf-root.is-forced-desktop { overflow-x: visible; }"));
+    assert.ok(/\.sf-daterange \{[^}]*flex-wrap: wrap/.test(css));
   });
   await test("открытие заметки по клику на заголовок", async () => {
     const c = await mkEnv({ view: "stream", id: "open" });

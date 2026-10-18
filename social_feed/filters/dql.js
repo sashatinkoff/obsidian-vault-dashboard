@@ -2,6 +2,7 @@
 const { dqlEscape } = require("lib/text");
 const { byId: periods } = require("filters/periods");
 const { merge } = require("filters/state");
+const { toMs, DAY } = require("lib/date");
 
 const EXT = { photo: "png|jpe?g|gif|webp|svg|avif", video: "mp4|mov|mkv|webm|m4v", audio: "mp3|wav|m4a|ogg|flac|aac", media: "png|jpe?g|gif|webp|svg|avif|mp4|mov|mkv|webm|m4v|mp3|wav|m4a|ogg|flac|aac" };
 const outlinkMedia = (ext) => `length(filter(file.outlinks, (l) => regexmatch("(?i).*\\\\.(${ext})$", string(l.path)))) > 0`;
@@ -26,6 +27,9 @@ function compile(filter, opts = {}) {
   if (f.types.length) notes.push("Типы карточек определяются движком ленты и в DQL не выражаются.");
   const p = periods[f.period];
   if (p && p.days) where.push(`${dateExpr} >= date(today) - dur(${p.days} days)`);
+  const nextDay = (s) => { const d = new Date(toMs(s) + DAY); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  if (f.dateFrom && toMs(f.dateFrom) != null) where.push(`${dateExpr} >= date("${f.dateFrom}")`);
+  if (f.dateTo && toMs(f.dateTo) != null) where.push(`${dateExpr} < date("${nextDay(f.dateTo)}")`);
   if (f.day) where.push(`${dateExpr} = date("${f.day}")`);
   if (f.minBacklinks > 0) where.push(`length(file.inlinks) >= ${f.minBacklinks}`);
   if (f.text.trim()) where.push(`contains(lower(file.name), "${dqlEscape(f.text.trim().toLowerCase())}")`);

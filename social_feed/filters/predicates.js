@@ -1,6 +1,6 @@
 // filters/predicates.js — отдельные условия фильтра (каждое — чистая функция).
 const { inPeriod } = require("filters/periods");
-const { dayKey } = require("lib/date");
+const { dayKey, toMs, startOfDay, DAY } = require("lib/date");
 const { norm } = require("lib/search");
 const tagHit = (postTags, wanted) => postTags.some((t) => t === wanted || t.startsWith(wanted + "/"));
 
@@ -13,6 +13,13 @@ const predicates = {
   sources: (p, f) => !f.sources.length || f.sources.includes(p.source),
   period: (p, f, now) => inPeriod(p.ts, f.period, now),
   day: (p, f) => !f.day || dayKey(p.ts) === f.day,
+  // Диапазон дат: «от» и «до» независимы — можно задать любой из них, оба или ни одного; границы включительно.
+  range: (p, f) => {
+    const from = f.dateFrom ? toMs(f.dateFrom) : null, to = f.dateTo ? toMs(f.dateTo) : null;
+    if (from != null && p.ts < startOfDay(from)) return false;
+    if (to != null && p.ts >= startOfDay(to) + DAY) return false;
+    return true;
+  },
   backlinks: (p, f) => p.backlinks >= (f.minBacklinks || 0),
   text: (p, f) => {
     const words = norm((f.text || "").trim()).split(/\s+/).filter(Boolean);

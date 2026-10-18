@@ -26,6 +26,8 @@ function toTokens(f) {
   for (const s of f.sources) cond("источник: " + s, "sources", s);
   if (f.period && f.period !== "all") cond("период: " + (periods[f.period] ? periods[f.period].label.toLowerCase() : f.period), "period");
   if (f.minBacklinks > 0) cond("связи ≥ " + f.minBacklinks, "minBacklinks");
+  if (f.dateFrom) cond("с " + f.dateFrom, "dateFrom");
+  if (f.dateTo) cond("по " + f.dateTo, "dateTo");
   if (f.day) cond("день: " + f.day, "day");
   if ((f.text || "").trim()) cond("поиск: «" + f.text.trim() + "»", "text");
   return out;

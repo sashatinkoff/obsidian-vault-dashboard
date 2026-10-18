@@ -37,7 +37,8 @@ async function run({ dv, app, input, root, container, boot }) {
   ctx.content = createContent({ app, config });
   ctx.repo = createPostsRepo({ dv, config });
   Object.assign(ctx, createOpenNote(ctx));
-  ctx.scroll = createScroll({ session, key: (dv.currentFilePath || "") + "::" + (input.id || "default") });
+  ctx.scrollKey = (dv.currentFilePath || "") + "::" + (input.id || "default");
+  ctx.scroll = createScroll({ session, key: ctx.scrollKey, log: config.debug ? (...a) => console.log("[social_feed:scroll]", ...a) : undefined });
   ctx.actions = createActions(ctx);
   ctx.indexer = createIndexer(ctx);
   await mountShell(ctx, container);

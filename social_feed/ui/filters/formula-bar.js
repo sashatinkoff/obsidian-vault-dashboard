@@ -7,7 +7,7 @@ const chip = require("ui/common/chip");
 
 module.exports = function formulaBar(ctx) {
   const el = h("div", { class: "sf-formula" });
-  const DEFAULTS = { period: "all", minBacklinks: 0, day: "", text: "" };
+  const DEFAULTS = { period: "all", minBacklinks: 0, day: "", text: "", dateFrom: "", dateTo: "" };
   function removeCond(t) {
     if (t.key === "types") ctx.actions.toggleType(t.item);
     else if (t.key === "sources") ctx.actions.toggleSource(t.item);
@@ -16,7 +16,6 @@ module.exports = function formulaBar(ctx) {
   function draw() {
     clear(el);
     const f = ctx.store.get().filter, tokens = toTokens(f);
-    el.append(h("span", { class: "sf-formula__label" }, icon("code", { size: 13 }), "FORMULA"));
     const body = h("div", { class: "sf-formula__body" });
     const st = ctx.store.get(), preset = st.presetId && ctx.presets.get(st.presetId);
     if (preset) body.append(chip({ text: "подборка: " + preset.name, kind: "rule", active: true, onRemove: () => ctx.actions.resetFilter() }));

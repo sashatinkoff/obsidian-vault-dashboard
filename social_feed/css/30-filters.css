@@ -15,8 +15,6 @@
 .sf-panel.is-collapsed .sf-panel__details { display: none; }
 
 .sf-formula { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: var(--sf-r-lg); background: var(--sf-surface-2); min-height: 40px; }
-.sf-formula__label { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: var(--sf-r-sm); background: var(--sf-surface-4); color: var(--sf-text-3); font-family: var(--sf-font-mono); font-size: 10.5px; letter-spacing: 0.05em; }
-.sf-formula__label .sf-icon { color: var(--sf-primary); }
 .sf-formula__body { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1; min-width: 0; }
 .sf-formula__empty { color: var(--sf-text-3); font-size: 12px; font-family: var(--sf-font-mono); }
 .sf-formula__paren { font-family: var(--sf-font-mono); color: var(--sf-text-3); }
@@ -47,3 +45,9 @@
 .sf-attrs__label { font-family: var(--sf-font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--sf-text-3); margin-right: 2px; }
 .sf-attrs__sep { width: 1px; height: 18px; background: var(--sf-line); margin: 0 6px; }
 .sf-advanced { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; padding-top: 12px; border-top: 1px solid var(--sf-line); }
+
+/* Наборы тегов: Топ · Случайные · За год · Этот день */
+.sf-tagtabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.sf-tagtab { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: var(--sf-r-pill); background: var(--sf-surface-2); color: var(--sf-text-2); font-family: var(--sf-font-mono); font-size: 11px; transition: background 0.15s, color 0.15s; }
+.sf-tagtab:hover { color: var(--sf-text); background: var(--sf-surface-3); }
+.sf-tagtab.is-active { background: var(--sf-accent-grad); color: var(--sf-primary-on); }

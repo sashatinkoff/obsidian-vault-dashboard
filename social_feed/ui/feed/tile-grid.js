@@ -19,7 +19,7 @@ module.exports = function tileGrid(ctx, cards, { wide = () => false, variant = "
     raf = null;
     const W = width();
     if (dead || !W) return;
-    const GAP = W < (ctx.config.singleColumnBelow || 560) ? 14 : 24;
+    const GAP = W < (ctx.config.singleColumnBelow ?? 560) ? 14 : 24;
     const cols = columnCount(W, ctx.config, GAP);
     const colW = (W - GAP * (cols - 1)) / cols;
     const hs = new Array(cols).fill(0);

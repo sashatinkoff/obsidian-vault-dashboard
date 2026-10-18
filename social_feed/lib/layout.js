@@ -5,7 +5,7 @@ function columnCount(width, cfg, gap = 24) {
   if (min > max) [min, max] = [max, min];
   min = Math.max(1, min); max = Math.max(min, max);
   if (!width) return max;
-  if (width < (cfg.singleColumnBelow || 560)) return 1;
+  if (width < (cfg.singleColumnBelow ?? 560)) return 1;
   const fit = Math.floor((width + gap) / ((cfg.minCardWidth || 320) + gap));
   return Math.max(min, Math.min(max, fit));
 }

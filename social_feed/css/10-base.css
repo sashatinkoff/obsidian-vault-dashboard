@@ -1,5 +1,5 @@
 /* 10-base.css — корень, типографика, кнопки, чипы, поля ввода, служебные состояния. */
-.sf-root { color: var(--sf-text); background: var(--sf-canvas); font-family: var(--sf-font-body); font-size: 14px; line-height: 22px; border-radius: var(--sf-r-xl); padding: var(--sf-gutter) var(--sf-gutter-lg) var(--sf-gutter-lg); max-width: 1600px; margin: 0 auto; box-sizing: border-box; position: relative; }
+.sf-root { color: var(--sf-text); background: var(--sf-root-bg, transparent); font-family: var(--sf-font-body); font-size: 14px; line-height: 22px; border-radius: var(--sf-r-xl); padding: var(--sf-gutter) var(--sf-gutter-lg) var(--sf-gutter-lg); max-width: 1600px; margin: 0 auto; box-sizing: border-box; position: relative; overflow-x: clip; }
 .sf-root *, .sf-root *::before, .sf-root *::after { box-sizing: border-box; }
 :where(.sf-root) button { font: inherit; color: inherit; background: none; border: 0; box-shadow: none; cursor: pointer; padding: 0; height: auto; }
 :where(.sf-root) h1, :where(.sf-root) h2, :where(.sf-root) h3, :where(.sf-root) p { margin: 0; }
@@ -19,8 +19,8 @@
 /* Кнопки */
 .sf-btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: var(--sf-r); background: var(--sf-surface-2); color: var(--sf-text); font-family: var(--sf-font-mono); font-weight: 500; font-size: 12px; letter-spacing: 0.02em; transition: background 0.15s, color 0.15s, box-shadow 0.15s; }
 .sf-btn:hover { background: var(--sf-surface-3); }
-.sf-btn--primary { background: var(--sf-primary-fill); color: var(--sf-primary-on); font-family: var(--sf-font-head); font-size: 14px; box-shadow: var(--sf-shadow); }
-.sf-btn--primary:hover { background: var(--sf-primary-hover); }
+.sf-btn--primary { background: var(--sf-accent-grad); color: var(--sf-primary-on); border-radius: var(--sf-r-pill); padding: 0 18px; font-family: var(--sf-font-head); font-size: 14px; box-shadow: var(--sf-glow); }
+.sf-btn--primary:hover { background: var(--sf-accent-grad); filter: brightness(1.08); }
 .sf-btn--ghost { background: transparent; color: var(--sf-text-2); }
 .sf-btn--ghost:hover { background: var(--sf-surface-3); color: var(--sf-text); }
 .sf-btn--danger { color: var(--sf-danger); background: var(--sf-danger-soft); }
@@ -72,9 +72,12 @@
 @keyframes sf-shimmer { to { background-position: -200% 0; } }
 .sf-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--sf-surface-4); color: var(--sf-text); padding: 8px 16px; border-radius: var(--sf-r); box-shadow: var(--sf-glow); z-index: 100; font-size: 13px; }
 
-/* Кнопка «Наверх» (sticky внутри области заметки) */
-.sf-totop { position: sticky; bottom: 20px; height: 0; display: flex; justify-content: flex-end; z-index: 30; pointer-events: none; transition: opacity 0.2s; }
-.sf-totop.is-hidden { opacity: 0; }
-.sf-totop__btn { position: absolute; bottom: 0; right: 4px; width: 42px; height: 42px; border-radius: 50%; background: var(--sf-primary-fill); color: var(--sf-primary-on); display: inline-flex; align-items: center; justify-content: center; box-shadow: var(--sf-glow); pointer-events: auto; transition: transform 0.15s, background 0.15s; }
-.sf-totop.is-hidden .sf-totop__btn { pointer-events: none; }
-.sf-totop__btn:hover { background: var(--sf-primary-hover); transform: translateY(-2px); }
+/* Кнопка «Наверх»: fixed в <body> (см. ui/common/scroll-top.js), положение задаёт JS по прокручиваемой области */
+.sf-fab { position: fixed; right: 16px; bottom: 20px; z-index: 40; transition: opacity 0.2s, transform 0.2s; }
+.sf-fab.is-hidden { opacity: 0; transform: translateY(8px); pointer-events: none; }
+.sf-fab__btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--sf-accent-grad); color: var(--sf-primary-on); box-shadow: var(--sf-glow); cursor: pointer; border: 0; padding: 0; transition: transform 0.15s, filter 0.15s; }
+.sf-fab__btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
+
+/* Защита от горизонтальной прокрутки (планшет): flex/grid-потомки могут сжиматься, длинное содержимое не раздвигает блок */
+.sf-view, .sf-toolbar > *, .sf-toolbar__controls, .sf-panel, .sf-panel__head, .sf-panel__details, .sf-formula, .sf-tagbuilder, .sf-advanced, .sf-quickbar { min-width: 0; max-width: 100%; }
+.sf-root.is-forced-desktop { overflow-x: visible; }

@@ -1,6 +1,6 @@
 // filters/state.js — модель состояния фильтра и неизменяемые операции над ним.
 const MODES = ["any", "all", "not"];
-const defaultFilter = () => ({ any: [], all: [], not: [], attrs: [], types: [], sources: [], period: "all", day: "", minBacklinks: 0, text: "", sort: "date-desc" });
+const defaultFilter = () => ({ any: [], all: [], not: [], attrs: [], types: [], sources: [], period: "all", day: "", dateFrom: "", dateTo: "", minBacklinks: 0, text: "", sort: "date-desc" });
 const normTag = (t) => String(t || "").trim().replace(/^#+/, "").toLowerCase();
 const merge = (base, patch) => ({ ...defaultFilter(), ...(base || {}), ...(patch || {}) });
 const isDefault = (f) => JSON.stringify(merge(f)) === JSON.stringify(defaultFilter());

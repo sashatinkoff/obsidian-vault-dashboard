@@ -9,6 +9,7 @@ class Node_ {
   removeChild(n) { const i = this.childNodes.indexOf(n); if (i >= 0) { this.childNodes.splice(i, 1); n.parentNode = null; } return n; }
   remove() { if (this.parentNode) this.parentNode.removeChild(this); }
   get isConnected() { let t = this; while (t.parentNode) t = t.parentNode; return t === global.document.body || !!t.__attached; }
+  closest(sel) { const cls = sel.split(",").map((s) => s.trim().replace(/^\./, "")); for (let n = this; n && n.nodeType === 1; n = n.parentNode) if (cls.some((c) => n.classList.contains(c))) return n; return null; }
   contains(n) { for (let c = n; c; c = c.parentNode) if (c === this) return true; return false; }
   get textContent() { return this.childNodes.map((c) => c.textContent).join(""); }
   set textContent(v) { this.childNodes = []; if (v) this.appendChild(new Text_(String(v))); }

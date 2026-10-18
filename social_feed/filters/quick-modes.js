@@ -1,10 +1,10 @@
 // filters/quick-modes.js — быстрые режимы ленты: Все / В этот день / Рандомные / Избранное.
-const { sameMonthDay, fmtDayMonth } = require("lib/date");
+const { sameMonthDay } = require("lib/date");
 const { shuffle } = require("lib/random");
 
 const MODES = [
   { id: "all", icon: "infinity", label: () => "Все записи", test: () => true },
-  { id: "today", icon: "history", label: () => "В этот день", sub: (c) => fmtDayMonth(c.now), test: (p, c) => sameMonthDay(p.ts, c.now) },
+  { id: "today", icon: "history", label: () => "В этот день", test: (p, c) => sameMonthDay(p.ts, c.now) },
   { id: "random", icon: "dice", label: () => "Рандомные", pick: (list, c) => shuffle(list, c.seed).slice(0, c.config.randomCount || 12) },
   { id: "favorites", icon: "star", label: () => "Избранное", test: (p, c) => c.flags.isFavorite(p) },
 ];

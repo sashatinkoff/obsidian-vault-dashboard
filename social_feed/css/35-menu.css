@@ -28,3 +28,13 @@
 .sf-iconbtn.is-armed, .sf-btn.is-armed { width: auto; padding: 0 10px; background: var(--sf-danger-soft); color: var(--sf-danger); }
 .sf-confirm__text { font-family: var(--sf-font-mono); font-size: 11px; white-space: nowrap; }
 .sf-iconbtn.is-disabled, .sf-btn.is-disabled, .sf-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Диапазон дат рядом с поиском: три независимых параметра (текст · от · до) */
+.sf-search { flex-wrap: wrap; flex: 0 1 auto; }
+.sf-search .sf-input-wrap { flex: 1 1 240px; min-width: 200px; }
+.sf-daterange { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: 100%; }
+.sf-date { display: inline-flex; align-items: center; gap: 6px; padding-left: 10px; border-radius: var(--sf-r); background: var(--sf-surface); color: var(--sf-text-3); font-family: var(--sf-font-mono); font-size: 11px; }
+.sf-date:focus-within { background: var(--sf-surface-2); }
+.sf-date .sf-date__input { width: 132px; max-width: 100%; padding-left: 0; background: transparent; color: var(--sf-text); font-family: var(--sf-font-mono); font-size: 12px; }
+.sf-root[data-sf-theme="dark"] .sf-date__input, body.theme-dark .sf-root[data-sf-theme="auto"] .sf-date__input { color-scheme: dark; }
+.sf-search--panel { width: 100%; }
