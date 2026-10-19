@@ -56,7 +56,7 @@ async function mountShell(ctx, container) {
   applyLook();
   store.subscribe(applyLook, ["fullWidth", "theme"]);
   watchObsidianTheme(ctx);
-  store.subscribe(() => { wasMobile = applySize(); show(); }, ["viewMode"]);
+  store.subscribe(() => { wasMobile = applySize(); if (ctx.refreshNav) ctx.refreshNav(); show(); }, ["viewMode"]);
 
   // Obsidian переиспользует контейнер заметки при навигации: если виджет исчез (ушли в другую заметку любым способом) —
   // снимаем с контейнера класс полной ширины, чтобы новая заметка отображалась как обычно.
@@ -68,7 +68,7 @@ async function mountShell(ctx, container) {
   let dispose = null, token = 0;
   if (typeof ResizeObserver !== "undefined") {
     let t = null;
-    new ResizeObserver(() => { clearTimeout(t); t = setTimeout(() => { const m = applySize(); if (m !== wasMobile) { wasMobile = m; show(); } }, 120); }).observe(root);
+    new ResizeObserver(() => { clearTimeout(t); t = setTimeout(() => { const m = applySize(); if (m !== wasMobile) { wasMobile = m; if (ctx.refreshNav) ctx.refreshNav(); show(); } }, 120); }).observe(root);
   }
   async function show() {
     const my = ++token;

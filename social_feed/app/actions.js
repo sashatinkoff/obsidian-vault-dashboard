@@ -30,6 +30,7 @@ module.exports = function createActions(ctx) {
     setOpenInNewTab: (openInNewTab) => store.set({ openInNewTab }),
     setTheme: (theme) => store.set({ theme }),
     // Повторный клик по активной кнопке возвращает автоопределение по ширине
+    setViewModeTo: (viewMode) => store.set({ viewMode }),
     setViewMode: (mode) => store.set({ viewMode: store.get().viewMode === mode ? "auto" : mode }),
     setInsightsCount: (insightsCount) => store.set({ insightsCount }),
     setLayout: (layout) => store.set({ layout }),

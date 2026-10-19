@@ -8,7 +8,7 @@ const dqlPanel = require("ui/studio/dql-panel");
 const livePreview = require("ui/studio/live-preview");
 
 module.exports = {
-  id: "studio", title: "Фильтры · DQL", short: "Фильтры", icon: "code",
+  id: "studio", title: "Фильтры · DQL", short: "Конструктор", icon: "code",
   async render(ctx, el) {
     const posts = ctx.repo.collect();
     let draft = ctx.store.get().draft;

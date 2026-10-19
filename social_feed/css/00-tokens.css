@@ -1,6 +1,6 @@
 /* 00-tokens.css — дизайн-токены по dashboard.html (тональные слои без рамок). Тёмная и светлая темы.
    Всё оформление берётся отсюда. Тема: config.theme / кнопка в навигации; auto — по теме Obsidian. */
-.sf-root, .sf-fab {
+.sf-root, .sf-fab, .sf-modal {
   /* светлая тема (вариация той же палитры) */
   --sf-canvas: #fbf8fd;            /* surface */
   --sf-surface: #f5f2f8;           /* surface-container-low — карточки */
@@ -48,8 +48,8 @@
   --sf-font-mono: "JetBrains Mono", var(--font-monospace), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-.sf-root[data-sf-theme="dark"], .sf-fab[data-sf-theme="dark"],
-body.theme-dark .sf-root[data-sf-theme="auto"], body.theme-dark .sf-fab[data-sf-theme="auto"] {
+.sf-root[data-sf-theme="dark"], .sf-fab[data-sf-theme="dark"], .sf-modal[data-sf-theme="dark"],
+body.theme-dark .sf-root[data-sf-theme="auto"], body.theme-dark .sf-fab[data-sf-theme="auto"], body.theme-dark .sf-modal[data-sf-theme="auto"] {
   --sf-canvas: #131315;
   --sf-surface: #1b1b1d;
   --sf-surface-2: #1f1f21;

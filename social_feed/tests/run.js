@@ -116,7 +116,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
   console.log("\nsmoke (UI на заглушке DOM)");
   const types = {};
   const mkEnv = async (input0, width) => {
-    const input = { viewMode: "auto", ...input0 };
+    const input = { viewMode: "auto", openInNewTab: false, theme: "dark", ...input0 };
     const container = document.createElement("div");
     container.__attached = true;
     if (width) container.clientWidth = width;
@@ -422,22 +422,69 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     const c3 = await mkEnv({ view: "stream", id: "ver3", nav: false }); await wait(40);
     assert.ok(c3.byClass("sf-footer")[0].byClass("sf-version").length === 1);
   });
-  await test("мобильная версия: классы по ширине блока, фильтры свёрнуты, подписи компактны", async () => {
+  await test("мобильная версия: только разделы, кнопка «Фильтры» и краткая сводка; десктоп без изменений", async () => {
     const m = await mkEnv({ view: "stream", id: "mob1" }, 390); await wait(60);
     const root = m.byClass("sf-root")[0];
     assert.ok(root.classList.contains("is-mobile") && root.classList.contains("is-compact"), "is-mobile и is-compact");
-    assert.ok(m.byClass("sf-panel")[0].classList.contains("is-collapsed"), "панель фильтров на телефоне свёрнута");
-    const toggle = m.byClass("sf-panel__toggle")[0];
-    assert.ok(toggle.textContent.includes("Фильтры"), toggle.textContent);
-    toggle.click(); await wait(20);
-    assert.ok(!m.byClass("sf-panel")[0].classList.contains("is-collapsed"), "кнопка «Фильтры» раскрывает панель");
-    // «В этот день» — без даты
-    const today = m.byClass("sf-quick--today")[0];
-    assert.ok(today.textContent.startsWith("В этот день") && !/\d{1,2} [а-я]+/.test(today.textContent.replace(/\d+$/, "")) && m.byClass("sf-quick__sub").length === 0, today.textContent);
+    assert.ok(m.byClass("sf-mbar").length === 1 && m.byClass("sf-mfilter")[0].textContent.includes("Фильтры"), "кнопка «Фильтры»");
+    assert.ok(m.byClass("sf-toolbar").length === 0 && m.byClass("sf-quickbar").length === 0 && m.byClass("sf-panel").length === 0 && m.byClass("sf-search").length === 0, "панель, поиск и режимы убраны с экрана");
+    assert.ok(m.byClass("sf-msummary")[0].textContent.includes("Без фильтров"), "краткая сводка");
+    assert.strictEqual(m.byClass("sf-nav__tab").length, 5, "разделы на месте");
     const d = await mkEnv({ view: "stream", id: "mob2" }, 1400); await wait(60);
-    assert.ok(!d.byClass("sf-root")[0].classList.contains("is-mobile") && !d.byClass("sf-panel")[0].classList.contains("is-collapsed"), "на десктопе панель развёрнута");
+    assert.ok(!d.byClass("sf-root")[0].classList.contains("is-mobile") && d.byClass("sf-panel").length === 1 && d.byClass("sf-mbar").length === 0, "на десктопе — прежняя панель");
+    const today = d.byClass("sf-quick--today")[0];       // «В этот день» — без даты
+    assert.ok(today.textContent.startsWith("В этот день") && d.byClass("sf-quick__sub").length === 0, today.textContent);
     const t = await mkEnv({ view: "stream", id: "mob3" }, 700); await wait(30);
     assert.ok(t.byClass("sf-root")[0].classList.contains("is-compact") && !t.byClass("sf-root")[0].classList.contains("is-mobile"));
+  });
+  await test("мобильные фильтры: окно открывается кнопкой, применяет условия сразу, сводка и счётчик обновляются, закрывается", async () => {
+    const m = await mkEnv({ view: "stream", id: "mobm" }, 390); await wait(60);
+    const modals = () => document.body.byClass("sf-modal");
+    const before = modals().length;
+    m.byClass("sf-mfilter")[0].click(); await wait(30);
+    const modal = modals().at(-1);
+    assert.strictEqual(modals().length, before + 1, "окно открылось в <body>");
+    assert.deepStrictEqual(modal.byClass("sf-msec__title").map((x) => x.textContent), ["Применено", "Поиск и даты", "Режим", "Подборки", "Теги", "Атрибуты", "Условия", "Порядок и вид"]);
+    assert.ok(modal.byClass("sf-search").length === 1 && modal.byClass("sf-date__input").length === 2 && modal.byClass("sf-tagtab").length === 4, "поиск, даты, теги — внутри окна");
+    const total = () => m.byClass("sf-card").length, all = total();
+    const show = () => modal.byClass("sf-modal__show")[0].textContent;
+    assert.ok(show().startsWith("Показать"), show());
+    const chip = modal.byClass("sf-tagbuilder__tags")[0].byClass("sf-chip").find((c) => c.textContent.startsWith("#daily"));
+    chip.click(); await wait(60);
+    assert.ok(total() < all && m.byClass("sf-msummary")[0].textContent.includes("#daily"), "условие применено сразу, сводка показывает #daily");
+    assert.ok(m.byClass("sf-mfilter")[0].byClass("sf-panel__badge")[0].textContent === "1", "значок числа условий");
+    assert.ok(show().includes(String(total())), "«Показать N» отражает число найденных: " + show());
+    modal.byClass("sf-modal__footer")[0].byClass("sf-btn")[0].click(); await wait(60);   // «Сбросить»
+    assert.strictEqual(total(), all);
+    modal.byClass("sf-modal__show")[0].click(); await wait(20);
+    assert.strictEqual(modals().length, before, "«Показать» закрывает окно");
+    m.byClass("sf-mfilter")[0].click(); await wait(20);
+    document.dispatch("keydown", { key: "Escape" }); await wait(20);
+    assert.strictEqual(modals().length, before, "Esc закрывает окно");
+  });
+  await test("сводка фильтров: короткие строки по условиям", () => {
+    const { summarize } = R("filters/summary"), S = R("filters/state");
+    assert.deepStrictEqual(summarize({ filter: S.defaultFilter(), quick: "all" }), []);
+    const f = S.merge({ any: ["a", "b", "c", "d"], not: ["x"], attrs: ["photo"], text: " кот ", dateFrom: "2024-10-01", sort: "date-asc" });
+    const out = summarize({ filter: f, quick: "today" }, { presetName: "Мои" });
+    assert.deepStrictEqual(out.slice(0, 3), ["Подборка: Мои", "В этот день", "#a #b #c +1"]);
+    assert.ok(out.includes("без #x") && out.includes("С фото") && out.includes("«кот»") && out.includes("с 1 окт 2024") && out.includes("Старые сначала"), out.join("|"));
+  });
+  await test("раскладка: вкладки переносятся (flow), нет внутренних горизонтальных скроллеров, CSS-переменные через setProperty", () => {
+    const css = document.getElementById("sf-style-" + R("lib/misc").hash(ROOT)).textContent;
+    assert.ok(/\.sf-nav__tabs \{[^}]*flex-wrap: wrap/.test(css) && !/\.sf-nav__tabs \{[^}]*overflow-x: auto/.test(css), "вкладки переносятся на новую строку");
+    assert.ok(/\.sf-dql \{[^}]*white-space: pre-wrap/.test(css) && !/\.sf-heat__wrap \{[^}]*overflow-x: auto/.test(css));
+    const { h } = R("lib/dom"); const calls = [];
+    const el = h("div", { style: { "--cols": 26, width: "10px" } });
+    assert.strictEqual(el.style.width, "10px"); assert.ok(el.style["--cols"] === 26 || calls);
+  });
+  await test("обзор на телефоне: карта активности за полгода (26 недель) помещается без прокрутки", async () => {
+    const m = await mkEnv({ view: "overview", id: "ovm" }, 390); await wait(60);
+    const cells = m.byClass("sf-heat")[0].byClass("sf-heat__cell").length;
+    assert.strictEqual(cells, 26 * 7);
+    assert.ok(m.byClass("sf-block__title").some((t) => t.textContent === "Активность за полгода"));
+    const d = await mkEnv({ view: "overview", id: "ovd" }, 1400); await wait(60);
+    assert.strictEqual(d.byClass("sf-heat")[0].byClass("sf-heat__cell").length, 53 * 7);
   });
   await test("мобильная версия: все экраны рисуются без ошибок", async () => {
     for (const view of ["overview", "stream", "bento", "collections", "studio"]) {
@@ -488,7 +535,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     assert.ok(!c.textContent.includes("Пространства"));
     assert.ok(c.byClass("sf-block__sub").some((x) => x.textContent.includes("Каждый квадрат — один день")), "пояснение к квадратикам");
     assert.strictEqual(c.byClass("sf-heat__legend")[0].byClass("sf-heat__cell").length, 5);
-    assert.ok(c.byClass("sf-heat__month").length >= 10 && c.byClass("sf-heat__days")[0].textContent.includes("Пн"), "подписи месяцев и дней недели");
+    assert.ok(c.byClass("sf-heat__month").length >= 10 && c.byClass("sf-heat__daylabel").map((x) => x.textContent).join() === "Пн,Ср,Пт", "подписи месяцев и дней недели");
     assert.ok(c.byClass("sf-donut").length === 1 && c.byClass("sf-dist__row").length >= 2);
     const { levelRanges } = R("stats/activity");
     assert.deepStrictEqual(levelRanges(8), [[0, 0], [1, 2], [3, 4], [5, 6], [7, null]]);
@@ -513,7 +560,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     const nav = c.byClass("sf-nav")[0];
     assert.ok(!nav.textContent.includes("Journal Stream") && nav.byClass("sf-nav__brand").length === 0, "бренд-чип убран");
     assert.strictEqual(nav.byClass("sf-nav__tab").length, 5);
-    assert.ok(nav.byClass("sf-nav__tab").some((t) => t.byClass("sf-nav__short").length === 1 && t.byClass("sf-nav__short")[0].textContent === "Фильтры"), "короткая подпись для узких экранов");
+    assert.ok(nav.byClass("sf-nav__tab").some((t) => t.byClass("sf-nav__short").length === 1 && t.byClass("sf-nav__short")[0].textContent === "Конструктор"), "короткая подпись для узких экранов");
     const css = document.getElementById("sf-style-" + R("lib/misc").hash(ROOT)).textContent;
     assert.ok(/\.sf-nav__tabs \{[^}]*flex: 1 1 380px/.test(css) && /\.sf-nav__tab \{[^}]*flex: 1 0 auto/.test(css), "вкладки растягиваются на всю ширину");
     assert.ok(/\.sf-root\.is-mobile \.sf-nav__tabs \{ flex: 1 0 100%/.test(css), "на телефоне вкладки — отдельной строкой");
@@ -574,37 +621,61 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     assert.strictEqual(sc.scrollTop, 1500, "позиция восстановлена на настоящем контейнере, а не на обёртке");
     assert.strictEqual(wrap.scrollTop, 0);
   });
-  await test("вид: кнопки «мобильный» / «десктопный» включают и выключают принудительный вид", async () => {
+  await test("вид: кнопки «мобильный» / «десктопный» включают принудительный вид; на телефоне возврат — через «Настройки»", async () => {
     const c = await mkEnv({ view: "stream", id: "vm1" }, 1400); await wait(50);
     const root = c.byClass("sf-root")[0];
-    const btn = (title) => c.byClass("sf-nav__right")[0].byClass("sf-iconbtn").find((b) => b.attrs.title.includes(title));
+    const modalPill = (label) => document.body.byClass("sf-modal").at(-1).byClass("sf-sortbtn").find((b) => b.textContent.includes(label));
     assert.ok(!root.classList.contains("is-mobile"));
-    btn("мобильный вид").click(); await wait(80);
+    c.byClass("sf-nav__right")[0].byClass("sf-iconbtn").find((b) => b.attrs.title.includes("мобильный вид")).click(); await wait(80);
     assert.ok(root.classList.contains("is-mobile") && root.classList.contains("is-forced-mobile") && root.classList.contains("is-compact"), "мобильный вид включён на широком экране");
-    assert.ok(c.byClass("sf-panel")[0].classList.contains("is-collapsed"), "фильтры свёрнуты, как на телефоне");
-    btn("Мобильный вид включён").click(); await wait(80);
-    assert.ok(!root.classList.contains("is-mobile") && !root.classList.contains("is-forced-mobile"), "повторный клик — авто");
-    await wait(300);
+    assert.ok(c.byClass("sf-mbar").length === 1 && c.byClass("sf-panel").length === 0, "мобильная шапка вместо панели фильтров");
+    assert.ok(c.byClass("sf-nav__gear").length === 1 && c.byClass("sf-nav__right").length === 0, "в мобильной шапке — только разделы и «Настройки»");
+    c.byClass("sf-nav__gear")[0].click(); await wait(30);
+    modalPill("Авто").click(); await wait(80);                                    // возврат к автоопределению
+    assert.ok(!root.classList.contains("is-mobile") && !root.classList.contains("is-forced-mobile"), "«Авто» возвращает автоопределение");
+    assert.ok(c.byClass("sf-nav__right").length === 1, "шапка десктопа вернулась");
+    document.dispatch("keydown", { key: "Escape" }); await wait(300);
     assert.strictEqual(readDb().ui.viewMode, "auto");
 
     const m = await mkEnv({ view: "stream", id: "vm2" }, 390); await wait(50);
     const mroot = m.byClass("sf-root")[0];
     assert.ok(mroot.classList.contains("is-mobile"));
-    m.byClass("sf-nav__right")[0].byClass("sf-iconbtn").find((b) => b.attrs.title.includes("десктопный вид")).click(); await wait(80);
+    m.byClass("sf-nav__gear")[0].click(); await wait(30);
+    modalPill("Десктопный").click(); await wait(80);
     assert.ok(!mroot.classList.contains("is-mobile") && mroot.classList.contains("is-forced-desktop"), "десктопный вид на узком экране");
+    assert.ok(m.byClass("sf-nav__right").length === 1, "в десктопном виде — полная шапка");
+    document.dispatch("keydown", { key: "Escape" });
     const L = R("lib/layout");
     assert.strictEqual(L.columnCount(390, { columns: { min: 2, max: 4 }, minCardWidth: 320, singleColumnBelow: 0 }), 2, "в десктопном виде колонок не меньше 2");
     assert.strictEqual(L.columnCount(1600, { columns: { min: 2, max: 4 }, minCardWidth: 320, singleColumnBelow: 100000 }), 1, "в мобильном виде — один столбец");
   });
-  await test("верхние кнопки: скруглённые, в цвет акцента, градиент; кнопки вида и ширины доступны и на телефоне", async () => {
+  await test("настройки (телефон): вид, тема, заметки, версия; изменения применяются и сохраняются", async () => {
+    const m = await mkEnv({ view: "overview", id: "set1" }, 390); await wait(60);
+    m.byClass("sf-nav__gear")[0].click(); await wait(30);
+    const modal = document.body.byClass("sf-modal").at(-1);
+    assert.deepStrictEqual(modal.byClass("sf-msec__title").map((x) => x.textContent), ["Вид", "Тема", "Заметки", "О виджете"]);
+    const row = (t) => modal.byClass("sf-setrow").find((r) => r.textContent.includes(t));
+    assert.ok(row("новой вкладке").textContent.includes("Выкл"));
+    row("новой вкладке").click(); await wait(30);
+    assert.ok(modal.byClass("sf-setrow").find((r) => r.textContent.includes("новой вкладке")).textContent.includes("Вкл"), "переключатель обновился");
+    modal.byClass("sf-sortbtn").find((b) => b.textContent.includes("Светлая")).click(); await wait(20);
+    assert.strictEqual(m.byClass("sf-root")[0].dataset.sfTheme, "light");
+    await wait(450);
+    assert.ok(readDb().ui.openInNewTab === true && readDb().ui.theme === "light");
+    app.opened.length = 0;
+    row("Journal Stream").click(); await wait(20);
+    assert.ok(app.opened[0][0].endsWith("README#История версий"), "версия ведёт в README");
+    assert.strictEqual(document.body.byClass("sf-modal").filter((n) => n === modal).length, 0, "окно закрылось");
+  });
+  await test("верхние кнопки: скруглённые, в цвет акцента, градиент; кнопки вида и ширины на десктопе; на телефоне — в «Настройках»", async () => {
     const css = document.getElementById("sf-style-" + R("lib/misc").hash(ROOT)).textContent;
     assert.ok(/--sf-accent-grad: linear-gradient/.test(css) && /--sf-accent-soft: linear-gradient/.test(css));
     assert.ok(/\.sf-nav__tab\.is-active \{ background: var\(--sf-accent-grad\)/.test(css), "активная вкладка — градиент акцента");
     assert.ok(/\.sf-nav__tab \{[^}]*border-radius: var\(--sf-r-pill\)[^}]*var\(--sf-accent-soft\)/.test(css), "неактивные — скруглённые с мягким градиентом");
     assert.ok(/\.sf-btn--primary \{ background: var\(--sf-accent-grad\)/.test(css));
     assert.ok(!css.includes(".sf-nav__fullbtn { display: none"), "кнопка ширины не скрыта на телефоне");
-    const m = await mkEnv({ view: "stream", id: "btn390" }, 390); await wait(40);
-    assert.strictEqual(m.byClass("sf-nav__right")[0].byClass("sf-iconbtn").length, 4, "на телефоне все 4 кнопки-иконки на месте (вид ×2, вкладка, ширина)");
+    const d = await mkEnv({ view: "stream", id: "btn1400" }, 1400); await wait(40);
+    assert.strictEqual(d.byClass("sf-nav__right")[0].byClass("sf-iconbtn").length, 4, "на десктопе все 4 кнопки-иконки на месте (вид ×2, вкладка, ширина)");
   });
   await test("фильтр дат: «от» и «до» независимы (предикат, формула, DQL, подборки)", () => {
     const { applyFilter } = R("filters/engine"), S = R("filters/state"), Q = R("filters/dql"), F = R("filters/formula"), P = R("filters/presets");
@@ -685,7 +756,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
   await test("смена темы Obsidian сбрасывает выбор темы в виджете на «auto»", async () => {
     let captured = []; global.MutationObserver = class { constructor(cb) { this.cb = cb; captured.push(this); } observe() {} disconnect() {} };
     document.body.classList.add("theme-dark");
-    const c = await mkEnv({ view: "stream", id: "thm2", theme: undefined }); await wait(40);
+    const c = await mkEnv({ view: "stream", id: "thm2", theme: "auto" }); await wait(40);
     const root = c.byClass("sf-root")[0];
     c.byClass("sf-themebtn")[0].click(); await wait(20);
     assert.strictEqual(root.dataset.sfTheme, "light", "выбор темы в виджете: светлая (при тёмной теме Obsidian)");

@@ -72,16 +72,13 @@
 .sf-block__stat strong { font-size: 18px; color: var(--sf-primary); }
 .sf-block__stat span { color: var(--sf-text-3); }
 
-.sf-heat__wrap { overflow-x: auto; padding-bottom: 4px; }
-.sf-heat__layout { display: flex; gap: 8px; width: max-content; }
-.sf-heat__days { display: grid; grid-template-rows: 14px repeat(7, 12px); row-gap: 3px; font-family: var(--sf-font-mono); font-size: 9.5px; line-height: 12px; color: var(--sf-text-3); }
-.sf-heat__days span:first-child { grid-row: 2; }
-.sf-heat__main { display: flex; flex-direction: column; gap: 3px; }
-.sf-heat__months { display: grid; grid-template-columns: repeat(53, 12px); column-gap: 3px; height: 14px; font-family: var(--sf-font-mono); font-size: 9.5px; line-height: 14px; color: var(--sf-text-3); }
-.sf-heat__month { white-space: nowrap; overflow: visible; }
-.sf-heat { display: flex; gap: 3px; }
-.sf-heat__col { display: flex; flex-direction: column; gap: 3px; }
-.sf-heat__cell { width: 12px; height: 12px; border-radius: 3px; background: var(--sf-heat-0); display: inline-block; flex: none; }
+/* Карта активности: одна сетка (подписи дней · недели), квадратные ячейки тянутся по ширине — прокрутка не нужна на любом экране */
+.sf-heat__wrap { max-width: calc(26px + var(--cols, 53) * 22px); }
+.sf-heat { --gap: 3px; display: grid; grid-template-columns: 22px repeat(var(--cols), minmax(0, 1fr)); grid-template-rows: 14px repeat(7, auto); gap: var(--gap); width: 100%; font-family: var(--sf-font-mono); font-size: 9.5px; color: var(--sf-text-3); }
+.sf-heat__daylabel { align-self: center; line-height: 1; }
+.sf-heat__month { white-space: nowrap; line-height: 14px; overflow: visible; }
+.sf-heat__cell { width: 100%; aspect-ratio: 1; min-width: 0; border-radius: 3px; background: var(--sf-heat-0); display: block; }
+.sf-heat__legend .sf-heat__cell { width: 12px; flex: none; }
 .sf-heat__cell.lv--1 { background: transparent; }
 .sf-heat__cell.lv-1 { background: var(--sf-heat-1); } .sf-heat__cell.lv-2 { background: var(--sf-heat-2); } .sf-heat__cell.lv-3 { background: var(--sf-heat-3); } .sf-heat__cell.lv-4 { background: var(--sf-heat-4); }
 .sf-heat__cell.is-click { cursor: pointer; } .sf-heat__cell.is-click:hover { outline: 2px solid var(--sf-primary-line); outline-offset: 1px; }

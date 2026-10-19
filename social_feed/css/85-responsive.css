@@ -31,7 +31,8 @@
 /* навигация: вкладки — отдельной строкой на всю ширину, ниже справа — версия и переключатели */
 .sf-root.is-mobile .sf-nav { gap: 6px; padding-bottom: 8px; margin-bottom: 4px; }
 .sf-root.is-mobile .sf-nav__tabs { flex: 1 0 100%; }
-.sf-root.is-mobile .sf-nav__tab { padding: 10px 6px; min-height: 40px; font-size: 12px; }
+.sf-root.is-mobile .sf-nav__tabs { gap: 6px; padding: 0; }
+.sf-root.is-mobile .sf-nav__tab { flex: 1 1 auto; min-width: 0; padding: 9px 10px; min-height: 38px; font-size: 12px; }
 .sf-root.is-mobile .sf-nav__right .sf-iconbtn, .sf-root.is-mobile .sf-toolbar__controls .sf-iconbtn { width: 38px; height: 38px; }
 .sf-root.is-mobile .sf-themebtn { width: 38px; height: 38px; }
 .sf-root.is-mobile .sf-sortbtn { height: 42px; padding: 0 12px; }
