@@ -18,7 +18,7 @@ module.exports = function createNewNote(ctx) {
     while (app.vault.getAbstractFileByPath(path)) path = `${base}-${++i}.md`;
     await ensureFolders(path);
     const field = (config.dateFields && config.dateFields[0]) || "date";
-    const file = await app.vault.create(path, `---\n${field}: "${fmtTokens((config.newNote && config.newNote.dateRule) || DEFAULT_DATE_RULE, now, (config.newNote && config.newNote.dateLang) || "ru")}"\ntags: []\n---\n\n`);
+    const file = await app.vault.create(path, `---\n${field}: "${fmtTokens((config.newNote && config.newNote.dateRule) || DEFAULT_DATE_RULE, now, (config.newNote && config.newNote.dateLang) || "ru")}"\n---\n\n`);
     if (ctx.repo) ctx.repo.markDirty();
     if (!config.newNote || config.newNote.open !== false) ctx.openNote(file.path || path);
     return file;

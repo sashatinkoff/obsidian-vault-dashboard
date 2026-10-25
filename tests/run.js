@@ -897,7 +897,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     app.opened.length = 0; btn.click(); await wait(40);
     const keys = Object.keys(app.createdFiles); const k = keys.at(-1);
     assert.ok(/^notes\/\d{4}-\d{2}-\d{2}-\d{2}-\d{2}\.md$/.test(k), k);
-    assert.ok(/^---\ndate: "\d{1,2} [а-я]+ \d{4}, \d{2}:\d{2}"\ntags: \[\]\n---/.test(app.createdFiles[k]), "frontmatter с датой");
+    assert.ok(/^---\ndate: "\d{1,2} [а-я]+ \d{4}, \d{2}:\d{2}"\n---\n\n$/.test(app.createdFiles[k]), "frontmatter с датой");
     assert.ok(app.opened.length === 1 && app.opened[0][0] === k, "заметка открыта");
     btn.click(); await wait(40); assert.ok(Object.keys(app.createdFiles).at(-1) === k.replace(".md", "-2.md"), "существующая заметка не затирается: суффикс -2");
     const tab = plugin.reg.tabs[0]; obsidian.__settings.length = 0; tab.display();
