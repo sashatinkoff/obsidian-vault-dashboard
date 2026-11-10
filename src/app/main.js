@@ -16,6 +16,7 @@ const createIndexer = require("services/indexer");
 const createScroll = require("services/scroll");
 const createChangelog = require("services/changelog");
 const createNewNote = require("services/new-note");
+const createNotePopup = require("ui/common/note-popup");
 const { Notice } = require("obsidian");
 const createAppState = require("app/state");
 const createActions = require("app/actions");
@@ -26,6 +27,12 @@ const { VERSION } = require("app/version");
 async function createCore(plugin) {
   const storage = createStorage(plugin);
   const db = await createDb(storage, { settings: DEFAULTS, presets: DEFAULT_PRESETS });
+  // Переход на новый формат имени файла новой заметки (YYYY-MM-DD hh-mm-ss): только для обновления с версии < 2.5.3, и только если там стояли прежние значения по умолчанию
+  { const nn = db.data.settings && db.data.settings.newNote, v = String(db.data.appVersion || "").split(".").map(Number), old = v.length === 3 && (v[0] < 2 || (v[0] === 2 && (v[1] < 5 || (v[1] === 5 && v[2] < 3))));
+    if (nn && old) { let ch = false;
+      if (nn.fileName === "YYYY-MM-DD-hh-mm") { nn.fileName = "YYYY-MM-DD hh-mm-ss"; ch = true; }
+      if (nn.rule === "%%FOLDER_NAME/YYYY/YYYY-MM-MMMM/YYYY-MM-DD-hh-mm") { nn.rule = "%%FOLDER_NAME/YYYY/YYYY-MM-MMMM/YYYY-MM-DD hh-mm-ss"; ch = true; }
+      if (ch) db.save(); } }
   await loadCss(storage);
   return { plugin, app: plugin.app, storage, db, instances: new Set(), defaults: DEFAULTS };
 }
@@ -50,6 +57,9 @@ async function mount(core, { container, input = {}, sourcePath = "", component =
   ctx.media = createMedia(app);
   ctx.content = createContent({ app, config });
   ctx.repo = createPostsRepo({ app, config });
+  const popup = createNotePopup(ctx);
+  ctx.openPreview = (link, source) => popup.open(link, source);
+  ctx.closePreview = popup.close;
   Object.assign(ctx, createOpenNote(ctx));
   ctx.scrollKey = key;
   ctx.scroll = createScroll({ session, key, log: config.debug ? (...a) => console.log("[journal-stream:scroll]", ...a) : undefined });

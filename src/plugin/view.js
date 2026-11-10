@@ -1,6 +1,7 @@
 // plugin/view.js — отдельная вкладка Obsidian с лентой (ItemView). Сохраняет состояние и прокрутку между открытиями заметок.
 const { ItemView } = require("obsidian");
 const { mount } = require("app/main");
+const { hideSidebars } = require("plugin/sidebar");
 
 const VIEW_TYPE = "journal-stream-view";
 let counter = 0;
@@ -39,12 +40,20 @@ class JournalStreamView extends ItemView {
     container.empty && container.empty();
     container.classList.add("sf-view-host");
     this.mounting = mount(this.core, { container, input: { ...this.input, id: this.uid }, sourcePath: "", component: this })
-      .then((inst) => { this.inst = inst; })
+      .then((inst) => { this.inst = inst; this.hideSidebar(); })
       .catch((e) => { console.error("[journal-stream]", e); container.createEl("pre", { text: "[journal-stream] ошибка запуска:\n" + (e && e.stack ? e.stack : e) }); })
       .finally(() => { this.mounting = null; });
     return this.mounting;
   }
+  // Опция «Скрывать боковую панель при открытии ленты»: прячем панели, при закрытии вкладки (если включено) — возвращаем.
+  hideSidebar() {
+    const s = this.core.db.data.settings;
+    if (!s.hideSidebar || s.hideSidebar === "none" || this.restoreSidebar) return;
+    const restore = hideSidebars(this.core.app, s.hideSidebar);
+    this.restoreSidebar = s.restoreSidebar === false ? () => {} : restore;
+  }
   unmount() {
+    if (this.restoreSidebar) { try { this.restoreSidebar(); } catch (e) {} this.restoreSidebar = null; }
     if (this.inst) { this.input.view = this.inst.ctx.store.get().view; this.inst.destroy(); this.inst = null; }
     this.contentEl.empty && this.contentEl.empty();
   }

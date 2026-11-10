@@ -4,10 +4,14 @@
 // чтобы открытая заметка отображалась с обычными отступами.
 module.exports = function createOpenNote(ctx) {
   const wantsNewTab = (evt) => !!(ctx.store.get().openInNewTab || (evt && (evt.ctrlKey || evt.metaKey || evt.button === 1)));
-  const open = (linktext, source, evt) => {
+  // Режим «плавающее окно»: клик по карточке показывает заметку в окне просмотра. Ctrl/Cmd/средняя кнопка — как обычно, в редакторе.
+  const wantsPopup = (evt) => !!(ctx.store.get().popupView && ctx.openPreview && !(evt && (evt.ctrlKey || evt.metaKey || evt.button === 1)));
+  const open = (linktext, source, evt, opts) => {
+    if (!(opts && opts.editor) && wantsPopup(evt)) return ctx.openPreview(linktext, source);
     const newTab = wantsNewTab(evt);
     if (!newTab && ctx.leavePage) ctx.leavePage();
     return ctx.app.workspace.openLinkText(linktext, source || "", newTab);
   };
-  return { openNote: (path, evt) => open(path, "", evt), openLink: (link, source, evt) => open(link, source, evt) };
+  // opts.editor — открыть сразу в редакторе, минуя окно просмотра (новая заметка: её нужно писать, а не читать)
+  return { openNote: (path, evt, opts) => open(path, "", evt, opts), openLink: (link, source, evt) => open(link, source, evt) };
 };

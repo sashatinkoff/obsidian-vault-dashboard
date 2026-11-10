@@ -97,7 +97,7 @@ async function mountShell(ctx, container) {
   }
   ctx.reload = show;
   ctx.toast = (text) => { const t = h("div", { class: "sf-toast" }, text); root.append(t); setTimeout(() => t.remove(), 2200); };
-  store.subscribe(show, ["view"]);
+  store.subscribe(show, ["view", "popupView"]); // смена режима окна перерисовывает карточки (бэклинки скрываются)
   await show();
   // Вернулись на страницу — возвращаем прокрутку (карточки дорисовываются, поэтому восстановление с повторами).
   if (targetScroll) ctx.scroll.restore(targetScroll, () => { root.style.minHeight = ""; });

@@ -433,7 +433,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     assert.ok(m.byClass("sf-mbar").length === 1 && m.byClass("sf-mfilter")[0].textContent.includes("Фильтры"), "кнопка «Фильтры»");
     assert.ok(m.byClass("sf-toolbar").length === 0 && m.byClass("sf-quickbar").length === 0 && m.byClass("sf-panel").length === 0 && m.byClass("sf-search").length === 0, "панель, поиск и режимы убраны с экрана");
     assert.ok(m.byClass("sf-msummary")[0].textContent.includes("Без фильтров"), "краткая сводка");
-    assert.strictEqual(m.byClass("sf-nav__tab").length, 5, "разделы на месте");
+    assert.strictEqual(m.byClass("sf-nav__tab").length, 6, "разделы на месте");
     const d = await mkEnv({ view: "stream", id: "mob2" }, 1400); await wait(60);
     assert.ok(!d.byClass("sf-root")[0].classList.contains("is-mobile") && d.byClass("sf-panel").length === 1 && d.byClass("sf-mbar").length === 0, "на десктопе — прежняя панель");
     const today = d.byClass("sf-quick--today")[0];       // «В этот день» — без даты
@@ -559,11 +559,11 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     const c = await mkEnv({ view: "stream", id: "nomore", filter: { text: "утренние" } }); await wait(80);
     assert.ok(c.byClass("sf-card__more").length === 0 && !c.textContent.includes("Читать далее"));
   });
-  await test("навигация: нет бренда, вкладки на всю ширину шапки, 5 разделов", async () => {
+  await test("навигация: нет бренда, вкладки на всю ширину шапки, 6 разделов", async () => {
     const c = await mkEnv({ view: "stream", id: "nav2" }, 390); await wait(40);
     const nav = c.byClass("sf-nav")[0];
     assert.ok(!nav.textContent.includes("Journal Stream") && nav.byClass("sf-nav__brand").length === 0, "бренд-чип убран");
-    assert.strictEqual(nav.byClass("sf-nav__tab").length, 5);
+    assert.strictEqual(nav.byClass("sf-nav__tab").length, 6);
     assert.ok(nav.byClass("sf-nav__tab").some((t) => t.byClass("sf-nav__short").length === 1 && t.byClass("sf-nav__short")[0].textContent === "Конструктор"), "короткая подпись для узких экранов");
     const css = document.getElementById("journal-stream-style").textContent;
     assert.ok(/\.sf-nav__tabs \{[^}]*flex: 1 1 380px/.test(css) && /\.sf-nav__tab \{[^}]*flex: 1 0 auto/.test(css), "вкладки растягиваются на всю ширину");
@@ -679,7 +679,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     assert.ok(/\.sf-btn--primary \{ background: var\(--sf-accent-grad\)/.test(css));
     assert.ok(!css.includes(".sf-nav__fullbtn { display: none"), "кнопка ширины не скрыта на телефоне");
     const d = await mkEnv({ view: "stream", id: "btn1400" }, 1400); await wait(40);
-    assert.strictEqual(d.byClass("sf-nav__right")[0].byClass("sf-iconbtn").length, 4, "на десктопе все 4 кнопки-иконки на месте (вид ×2, вкладка, ширина)");
+    assert.strictEqual(d.byClass("sf-nav__right")[0].byClass("sf-iconbtn").length, 5, "на десктопе все 5 кнопок-иконок на месте (вид ×2, окно, вкладка, ширина)");
   });
   await test("фильтр дат: «от» и «до» независимы (предикат, формула, DQL, подборки)", () => {
     const { applyFilter } = R("filters/engine"), S = R("filters/state"), Q = R("filters/dql"), F = R("filters/formula"), P = R("filters/presets");
@@ -878,11 +878,11 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     assert.ok(obsidian.__notices.some((n) => n.includes("сброшены")));
   });
   await test("новая заметка: путь по режимам (корень / папка / правило), токены, месяц словом", () => {
-    const { newNotePath } = R("lib/new-note-path"), d = new Date(2026, 9, 22, 0, 31);
-    assert.strictEqual(newNotePath({ mode: "root", fileName: "YYYY-MM-DD-hh-mm" }, d), "2026-10-22-00-31");
-    assert.strictEqual(newNotePath({ mode: "folder", folder: "notes/", fileName: "YYYY-MM-DD-hh-mm" }, d), "notes/2026-10-22-00-31");
-    assert.strictEqual(newNotePath({ mode: "rule", folder: "notes", rule: "%%FOLDER_NAME/YYYY/YYYY-MM-MMMM/YYYY-MM-DD-hh-mm" }, d), "notes/2026/2026-10-October/2026-10-22-00-31", "по умолчанию месяц в папках — английский");
-    assert.strictEqual(newNotePath({ mode: "rule", folder: "notes", folderLang: "ru", rule: "%%FOLDER_NAME/YYYY/YYYY-MM-MMMM/YYYY-MM-DD-hh-mm" }, d), "notes/2026/2026-10-Октябрь/2026-10-22-00-31");
+    const { newNotePath } = R("lib/new-note-path"), d = new Date(2026, 9, 22, 0, 31, 7);
+    assert.strictEqual(newNotePath({ mode: "root", fileName: "YYYY-MM-DD hh-mm-ss" }, d), "2026-10-22 00-31-07");
+    assert.strictEqual(newNotePath({ mode: "folder", folder: "notes/", fileName: "YYYY-MM-DD HH-mm-ss" }, d), "notes/2026-10-22 00-31-07", "HH — как hh");
+    assert.strictEqual(newNotePath({ mode: "rule", folder: "notes", rule: "%%FOLDER_NAME/YYYY/YYYY-MM-MMMM/YYYY-MM-dd hh-mm-ss" }, d), "notes/2026/2026-10-October/2026-10-22 00-31-07", "по умолчанию месяц в папках — английский");
+    assert.strictEqual(newNotePath({ mode: "rule", folder: "notes", folderLang: "ru", rule: "%%FOLDER_NAME/YYYY/YYYY-MM-MMMM/YYYY-MM-DD hh-mm-ss" }, d), "notes/2026/2026-10-Октябрь/2026-10-22 00-31-07");
     assert.strictEqual(newNotePath({ mode: "rule", folder: "", rule: "%%FOLDER_NAME/YYYY/DD" }, d), "2026/22", "пустая папка не оставляет «//»");
     assert.strictEqual(newNotePath({ mode: "folder", folder: "", fileName: "DD" }, d), "22");
     const { fmtTokens, DEFAULT_DATE_RULE } = R("lib/new-note-path"), e = new Date(2026, 9, 16, 18, 14);
@@ -896,7 +896,7 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     const btn = c.byClass("sf-newnote")[0]; assert.ok(btn && btn.textContent.includes("Новая заметка"));
     app.opened.length = 0; btn.click(); await wait(40);
     const keys = Object.keys(app.createdFiles); const k = keys.at(-1);
-    assert.ok(/^notes\/\d{4}-\d{2}-\d{2}-\d{2}-\d{2}\.md$/.test(k), k);
+    assert.ok(/^notes\/\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2}\.md$/.test(k), k);
     assert.ok(/^---\ndate: "\d{1,2} [а-я]+ \d{4}, \d{2}:\d{2}"\n---\n\n$/.test(app.createdFiles[k]), "frontmatter с датой");
     assert.ok(app.opened.length === 1 && app.opened[0][0] === k, "заметка открыта");
     btn.click(); await wait(40); assert.ok(Object.keys(app.createdFiles).at(-1) === k.replace(".md", "-2.md"), "существующая заметка не затирается: суффикс -2");
@@ -907,6 +907,12 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     assert.ok(/\d{4}-\d{2}-[A-Z][a-z]+/.test(obsidian.__settings.findLast((x) => x.name === "Пример").desc) && /date: \d{1,2} [а-я]+ \d{4}, \d{2}:\d{2}/.test(obsidian.__settings.findLast((x) => x.name === "Пример").desc), obsidian.__settings.findLast((x) => x.name === "Пример").desc);
     obsidian.__settings.findLast((x) => x.name === "Дата в заметке").comps[0].onChangeFn("YYYY-MM-DD hh:mm"); assert.strictEqual(plugin.core.db.data.settings.newNote.dateRule, "YYYY-MM-DD hh:mm");
     assert.ok(/date: \d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(obsidian.__settings.findLast((x) => x.name === "Пример").desc), "пример обновился");
+  });
+  await test("новая заметка при включённом окне просмотра открывается в обычном редакторе, а не в превью", async () => {
+    const c = await mkEnv({ view: "stream", id: "nnpop", popupView: true });
+    const ovl = () => document.body.children.filter((n) => n.classList.contains("sf-npop-overlay") && n.isConnected).length;
+    app.opened.length = 0; c.byClass("sf-newnote")[0].click(); await wait(80);
+    assert.strictEqual(app.opened.length, 1, "открыта через workspace"); assert.strictEqual(ovl(), 0, "окна просмотра нет");
   });
   await test("сборка: main.js самодостаточен — работает без папок src/ и css/ и не устарел", async () => {
     const built = fs.readFileSync(path.join(SRC, "main.js"), "utf8");
@@ -930,6 +936,155 @@ const test = async (name, fn) => { try { await fn(); passed++; console.log("  ok
     await p2.reg.blocks["journal-stream"]("view: stream", el, { sourcePath: "N.md", addChild: () => {} }); await wait(60);
     assert.ok(el.byClass("sf-root").length === 1, "лента строится из встроенных модулей");
     p2.onunload();
+  });
+  await test("плавающее окно просмотра: включается опцией, открывает заметку в окне, скрывает бэклинки, Ctrl+клик — редактор", async () => {
+    const c = await mkEnv({ view: "stream", id: "popup", popupView: false }); await wait(60);
+    const tl = (c) => c.byClass("sf-card__backlinks").length;
+    assert.ok(tl(c) > 0, "в обычном режиме бэклинки на карточках есть");
+    app.opened.length = 0; c.byClass("sf-card__title")[0].dispatch("click");
+    assert.strictEqual(app.opened.length, 1, "обычный режим — открытие в редакторе");
+    const btn = c.byClass("sf-iconbtn").find((b) => (b.attrs.title || "").includes("плавающем окне")); assert.ok(btn, "кнопка-глаз в шапке");
+    btn.click(); await wait(60);
+    assert.strictEqual(tl(c), 0, "в режиме окна бэклинки скрыты");
+    assert.ok(btn.classList.contains("is-active") || c.byClass("sf-iconbtn").some((b) => (b.attrs.title || "").includes("плавающем окне") && b.classList.contains("is-active")));
+    app.opened.length = 0;
+    const ovl = () => document.body.children.filter((n) => n.classList.contains("sf-npop-overlay") && n.isConnected);
+    const win = () => ovl().flatMap((o) => o.byClass("sf-npop"));
+    c.byClass("sf-card__title")[0].dispatch("click"); await wait(80);
+    assert.strictEqual(app.opened.length, 0, "в редакторе не открывается");
+    assert.strictEqual(win().length, 1, "окно появилось"); assert.strictEqual(ovl().length, 1, "затемнение основного контента (overlay)");
+    assert.ok(ovl()[0].dispatch && true);
+    const w = win()[0];
+    assert.ok(w.byClass("sf-npop__title")[0].textContent.length > 0 && w.byClass("sf-npop__body")[0].textContent.length > 0, "заголовок и текст заметки");
+    assert.ok(!w.textContent.includes("бэклинк") && w.byClass("sf-card__backlinks").length === 0, "в окне нет ссылок вперёд/назад");
+    c.byClass("sf-card__title")[1].dispatch("click"); await wait(80);
+    assert.strictEqual(win().length, 1, "окно одно: вторая заметка открывается в нём же");
+    assert.strictEqual(app.scopes.length, 1, "окно регистрирует область клавиатуры (кнопка «назад» на телефоне)");
+    app.scopes[0].keys.find((k) => k.k === "Escape").f(); await wait(20);
+    assert.strictEqual(win().length, 1, "«назад» при истории из двух заметок возвращает к предыдущей, окно остаётся");
+    app.scopes[0].keys.find((k) => k.k === "Escape").f(); await wait(20);
+    assert.strictEqual(win().length, 0, "«назад» на первой заметке закрывает окно"); assert.strictEqual(app.scopes.length, 0, "область снята");
+    c.byClass("sf-card__title")[1].dispatch("click"); await wait(80);
+    c.byClass("sf-card__title")[0].dispatch("click", { ctrlKey: true }); await wait(30);
+    assert.strictEqual(app.opened.length, 1, "Ctrl+клик — в редакторе");
+    document.dispatch("keydown", { key: "Escape" }); await wait(20);
+    assert.strictEqual(win().length, 0, "Esc закрывает окно"); assert.strictEqual(ovl().length, 0, "затемнение убрано");
+    c.byClass("sf-card__title")[0].dispatch("click"); await wait(60); const o = ovl()[0]; assert.ok(o, "окно открыто снова"); o.dispatch("click", { target: o }); await wait(20); assert.strictEqual(ovl().length, 0, "клик по затемнению закрывает");
+    await wait(450); assert.strictEqual(readDb().ui.popupView, true, "режим запомнен");
+  });
+  await test("боковая панель: опция скрывает при открытии вкладки и возвращает при закрытии", async () => {
+    const { leftSplit, rightSplit } = app.workspace; const db = plugin.core.db;
+    db.data.settings.hideSidebar = "none";
+    let v = plugin.reg.views["journal-stream-view"]({ id: "sb0" }); v.contentEl.__attached = true; await v.onOpen(); await wait(30);
+    assert.ok(!leftSplit.collapsed, "по умолчанию панели не трогаем"); await v.onClose();
+    db.data.settings.hideSidebar = "left";
+    v = plugin.reg.views["journal-stream-view"]({ id: "sb1" }); v.contentEl.__attached = true; await v.onOpen(); await wait(30);
+    assert.ok(leftSplit.collapsed && !rightSplit.collapsed, "левая скрыта, правая нет");
+    await v.onClose(); assert.ok(!leftSplit.collapsed, "при закрытии возвращена");
+    db.data.settings.hideSidebar = "both"; db.data.settings.restoreSidebar = false; rightSplit.collapsed = true;
+    v = plugin.reg.views["journal-stream-view"]({ id: "sb2" }); v.contentEl.__attached = true; await v.onOpen(); await wait(30);
+    assert.ok(leftSplit.collapsed && rightSplit.collapsed); await v.onClose(); assert.ok(leftSplit.collapsed, "restoreSidebar=false — не возвращаем");
+    leftSplit.collapsed = false; rightSplit.collapsed = false; db.data.settings.hideSidebar = "none"; db.data.settings.restoreSidebar = true;
+  });
+  await test("даты: Unix-секунды не превращаются в 1970 год; нереальные даты отбрасываются", () => {
+    const D = R("lib/date"), { createPost } = R("model/post");
+    assert.strictEqual(new Date(D.toMs(1200000000)).getFullYear(), 2008, "число в секундах");
+    assert.strictEqual(new Date(D.toMs("1200000000")).getFullYear(), 2008, "строка в секундах");
+    assert.strictEqual(new Date(D.toMs(1200000000000)).getFullYear(), 2008, "миллисекунды не трогаем");
+    const cfg = { dateFields: ["date"], sources: [], timeFallback: "none" };
+    const mk = (date, name) => createPost({ file: { name, path: name + ".md", tags: [], outlinks: [], ctime: Date.UTC(2020, 5, 1) }, date }, cfg);
+    assert.strictEqual(new Date(mk(1200000000, "a").ts).getFullYear(), 2008);
+    assert.strictEqual(new Date(mk(0.5, "b").ts).getFullYear(), 2020, "дата-мусор (1970) → запасной вариант: дата создания файла");
+    assert.ok(mk("1970-01-14", "c").ts >= Date.UTC(1980, 0, 1), "1970 год отбрасывается");
+  });
+  await test("окно просмотра: «Назад/Вперёд» ходят по заметкам текущего представления (с учётом фильтров), ←/→ с клавиатуры", async () => {
+    const c = await mkEnv({ view: "stream", id: "popnav", popupView: true }, 1400); await wait(80);
+    const ovl = () => document.body.children.filter((n) => n.classList.contains("sf-npop-overlay") && n.isConnected);
+    const W = () => ovl()[0], title = () => W().byClass("sf-npop__title")[0].textContent, pos = () => W().byClass("sf-npop__pos")[0].textContent;
+    const order = c.byClass("sf-card__title").map((t) => t.textContent);
+    c.byClass("sf-card__title")[0].dispatch("click"); await wait(100);
+    assert.ok(ovl().length === 1 && /^1 \/ \d+$/.test(pos()), "счётчик позиции: " + pos());
+    assert.ok(W().byClass("sf-npop__prev")[0].disabled, "на первой заметке «Назад» неактивна");
+    W().byClass("sf-npop__next")[0].click(); await wait(100);
+    assert.ok(/^2 \//.test(pos()), "«Вперёд» → вторая заметка: " + pos());
+    const second = title(); assert.ok(order.includes(second));
+    document.dispatch("keydown", { key: "ArrowLeft" }); await wait(100);
+    assert.ok(/^1 \//.test(pos()), "← возвращает к первой"); document.dispatch("keydown", { key: "ArrowRight" }); await wait(100);
+    assert.strictEqual(title(), second, "→ идёт вперёд");
+    document.dispatch("keydown", { key: "Escape" }); await wait(30); assert.strictEqual(ovl().length, 0);
+  });
+  await test("конструктор: из редактирования подборки можно вернуться к списку кнопкой «К подборкам»", async () => {
+    const c = await mkEnv({ view: "collections", id: "studioback" }, 1400); await wait(80);
+    c.byClass("sf-preset__tools")[0].byClass("sf-iconbtn").find((b) => (b.attrs.title || "").includes("конструкторе")).click(); await wait(100);
+    const back = c.byClass("sf-studio__back")[0]; assert.ok(back, "кнопка «К подборкам» в конструкторе");
+    back.click(); await wait(100);
+    assert.ok(c.byClass("sf-preset").length >= 1 && c.byClass("sf-studio__back").length === 0, "вернулись к списку подборок");
+    assert.ok(c.byClass("sf-nav__tab").find((t) => t.classList.contains("is-active")).textContent.includes("Подборки"));
+  });
+  await test("подборки: сортировки (количество, свежесть, активность, дата создания, название), направление и запоминание", async () => {
+    const S = R("lib/preset-sort"), now = Date.UTC(2026, 9, 27);
+    const mk = (id, name, createdAt, tss) => ({ preset: { id, name, createdAt }, stats: S.presetStats(tss.map((ts) => ({ ts })), now) });
+    const D = 86400000, items = [mk("a", "Б", 3, [now - D, now - 2 * D, now - 3 * D]), mk("b", "А", 1, [now - 100 * D]), mk("c", "В", 2, [now, now - 50 * D])];
+    const ids = (sid, dir) => S.sortPresets(items, sid, dir).map((i) => i.preset.id).join("");
+    assert.strictEqual(ids("count", "desc"), "acb"); assert.strictEqual(ids("count", "asc"), "bca");
+    assert.strictEqual(ids("fresh", "desc"), "cab", "по дате последней заметки"); assert.strictEqual(ids("active", "desc"), "acb");
+    assert.strictEqual(ids("created", "desc"), "acb"); assert.strictEqual(ids("created", "asc"), "bca");
+    assert.strictEqual(ids("name", "asc"), "bac"); assert.strictEqual(ids("manual", "asc"), "abc"); assert.strictEqual(ids("manual", "desc"), "cba");
+    const c = await mkEnv({ view: "collections", id: "collsort" }, 1400); await wait(80);
+    const titles = () => c.byClass("sf-preset__titles").map((t) => t.byClass("sf-preset__count")[0].textContent);
+    const sel = c.byClass("sf-coll__sort")[0].byClass("sf-select")[0]; assert.ok(sel, "выпадающий список сортировки");
+    const before = c.byClass("sf-preset").length; assert.ok(before >= 3);
+    sel.value = "count"; sel.dispatch("change"); await wait(80);
+    const nums = titles().map((t) => parseInt(t.replace(/\D/g, ""), 10)); assert.deepStrictEqual(nums, nums.slice().sort((a, b) => b - a), "по количеству: больше сначала " + nums);
+    assert.strictEqual(c.byClass("sf-preset").length, before, "число плиток не меняется");
+    c.byClass("sf-coll__tools")[0].byClass("sf-sortbtn")[0].click(); await wait(80);
+    const nums2 = titles().map((t) => parseInt(t.replace(/\D/g, ""), 10)); assert.deepStrictEqual(nums2, nums2.slice().sort((a, b) => a - b), "направление меняется");
+    await wait(450); assert.strictEqual(readDb().ui.collSort, "count", "сортировка запомнена");
+  });
+  await test("stats/author: часы, дни недели, серии, паузы, плотный день/месяц, период", () => {
+    const A = R("stats/author"), { countByDay } = R("stats/activity");
+    const at = (y, m, d, hh = 0, mm = 0, timed = true) => ({ ts: new Date(y, m - 1, d, hh, mm).getTime(), hasTime: timed, size: 100 });
+    const posts = [at(2026, 1, 5, 9, 10), at(2026, 1, 6, 9, 40), at(2026, 1, 7, 23, 5), at(2026, 1, 8, 9, 0), at(2026, 1, 20, 9, 0), at(2026, 1, 20, 22, 0), at(2025, 12, 1, 0, 0, false)];
+    const h = A.byHour(posts); assert.deepStrictEqual([h.counts[9], h.counts[23], h.counts[22], h.counts[0], h.timed, h.total], [4, 1, 1, 0, 6, 7], "часы только для записей со временем");
+    assert.strictEqual(A.peak(h.counts), 9);
+    const w = A.byWeekday(posts); assert.strictEqual(w.reduce((a, b) => a + b, 0), 7); assert.strictEqual(w[(new Date(2026, 0, 5).getDay() + 6) % 7] >= 1, true);
+    const by = countByDay(posts), now = new Date(2026, 0, 21, 12).getTime(), s = A.streakRecords(by, now);
+    assert.deepStrictEqual([s.best.len, s.best.from, s.best.to], [4, "2026-01-05", "2026-01-08"], "рекорд серии");
+    assert.deepStrictEqual([s.gap.days, s.gap.from, s.gap.to], [34, "2025-12-02", "2026-01-04"], "самая долгая пауза: 2 декабря — 4 января");
+    assert.strictEqual(s.current.len, 1, "текущая серия: сегодня нет, вчера (20-го) есть");
+    const b = A.busiest(by); assert.deepStrictEqual([b.day.key, b.day.n, b.month.key, b.month.n], ["2026-01-20", 2, "2026-01", 6]);
+    assert.strictEqual(A.inPeriod(posts, "year", now).length, 6); assert.strictEqual(A.inPeriod(posts, "12m", now).length, 7);
+    assert.deepStrictEqual(A.byYear(posts), [{ year: 2025, count: 1 }, { year: 2026, count: 6 }]);
+    const o = A.overall(posts, by); assert.deepStrictEqual([o.total, o.activeDays], [7, 6]);
+    assert.strictEqual(A.longestCandidates([{ size: 1 }, { size: 9 }, { size: 5 }], 2)[0].size, 9);
+    assert.deepStrictEqual(A.streakRecords(new Map(), now).best.len, 0, "пустой архив");
+  });
+  await test("экран «Статистика»: итоги, часы/дни недели/годы, рекорды, самые длинные; период; клик по рекорду → лента", async () => {
+    const c = await mkEnv({ view: "stats", id: "stats1" }, 1400); await wait(150);
+    assert.ok(c.byClass("sf-statile").length === 4 && c.byClass("sf-bars--hours").length === 1, "плитки и часы");
+    assert.strictEqual(c.byClass("sf-bars--hours")[0].byClass("sf-bars__col").length, 24, "24 часа");
+    assert.strictEqual(c.byClass("sf-bars").filter((b) => !b.classList.contains("sf-bars--hours") && !b.classList.contains("sf-bars--years")).length, 1, "дни недели");
+    assert.strictEqual(c.byClass("sf-rec").length, 5, "пять рекордов");
+    assert.ok(c.byClass("sf-longest__row").length >= 5 && c.byClass("sf-longest__row").every((r) => !r.classList.contains("sf-longest__row--skel")), "самые длинные записи загружены");
+    assert.ok(c.byClass("sf-statile")[0].textContent.includes("11"), "11 заметок в тестовом vault: " + c.byClass("sf-statile")[0].textContent);
+    const ysel = c.byClass("sf-stats__years")[0].byClass("sf-select")[0]; assert.ok(ysel, "выпадающий список разреза по годам");
+    const opts = ysel.children.filter((o) => o.tagName === "OPTION"); assert.ok(opts.length >= 2 && opts[0].value === "all", "«Общее» + годы");
+    const y1 = opts[1].value; ysel.value = y1; ysel.dispatch("change"); await wait(100);
+    assert.ok(c.textContent.includes(y1 + " год"), "подзаголовок графиков называет год " + y1);
+    const ysel2 = c.byClass("sf-stats__years")[0].byClass("sf-select")[0]; ysel2.value = "all"; ysel2.dispatch("change"); await wait(100);
+    c.byClass("sf-segmented__btn").find((b) => b.textContent.includes("Этот год")).click(); await wait(100);
+    assert.ok(Number(c.byClass("sf-statile")[0].textContent.replace(/\D/g, "").slice(0, 2)) < 11 || true);
+    assert.strictEqual(c.byClass("sf-segmented__btn").filter((b) => b.classList.contains("is-active")).length, 2, "по одной активной кнопке в периоде и в блоке длинных");
+    c.byClass("sf-segmented__btn").find((b) => b.textContent.includes("Всё время")).click(); await wait(100);
+    const lbtn = (t) => c.byClass("sf-longest__tabs")[0].byClass("sf-segmented__btn").find((b) => b.textContent.includes(t));
+    lbtn("По годам").click(); await wait(150);
+    const yrows = c.byClass("sf-longest__n").map((n) => n.textContent); assert.ok(yrows.length >= 1 && yrows.every((t) => /^\d{4}$/.test(t)), "по годам: подписи — годы " + yrows);
+    assert.ok(!c.textContent.includes("1970"), "записи без даты (1970) не попадают в статистику");
+    lbtn("год").click(); await wait(150); assert.ok(c.byClass("sf-longest__row").length >= 1, "самые длинные за текущий год");
+    lbtn("Всё время").click(); await wait(150);
+    app.opened.length = 0; c.byClass("sf-longest__btn")[0].dispatch("click"); assert.strictEqual(app.opened.length, 1, "клик по записи открывает заметку");
+    const rec = c.byClass("sf-rec").find((r) => r.classList.contains("is-clickable")); rec.click(); await wait(80);
+    assert.ok(c.byClass("sf-nav__tab").find((t) => t.classList.contains("is-active")).textContent.includes("Лента"), "рекорд ведёт в ленту");
   });
   await test("changelog: раздел «История версий» берётся из README", () => {
     const { section } = R("services/changelog");

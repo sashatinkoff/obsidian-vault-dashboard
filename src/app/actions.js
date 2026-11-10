@@ -27,6 +27,7 @@ module.exports = function createActions(ctx) {
     // Направление сортировки по времени: по умолчанию «сначала новые» (date-desc); любая другая сортировка → сначала новые
     toggleSortDir: () => setFilter({ sort: filter().sort === "date-desc" ? "date-asc" : "date-desc" }),
     setFullWidth: (fullWidth) => store.set({ fullWidth }),
+    setPopupView: (popupView) => store.set({ popupView }),
     setOpenInNewTab: (openInNewTab) => store.set({ openInNewTab }),
     setTheme: (theme) => store.set({ theme }),
     // Повторный клик по активной кнопке возвращает автоопределение по ширине

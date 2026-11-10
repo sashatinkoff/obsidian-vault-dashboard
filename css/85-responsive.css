@@ -93,6 +93,11 @@
 .sf-root.is-mobile .sf-richlink { padding: 10px; }
 
 /* Timeline: дата — заголовком над карточками, без левой колонки */
+/* Timeline: два столбца на любой ширине от singleColumnBelow (560 px) — на планшете подпись дня уходит над столбцами, чтобы карточкам хватило места */
+.sf-root.is-compact .sf-timeline__group { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.sf-root.is-compact .sf-timeline__label { position: relative; top: auto; flex-direction: row; align-items: baseline; gap: 8px; padding-left: 16px; }
+.sf-root.is-compact .sf-timeline__dot { top: 7px; }
+.sf-root.is-compact .sf-timeline__items { border-left: 0; padding-left: 0; margin-left: 0; }
 .sf-root.is-mobile .sf-timeline__group { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .sf-root.is-mobile .sf-timeline__label { position: relative; top: auto; flex-direction: row; align-items: baseline; gap: 8px; padding-left: 16px; }
 .sf-root.is-mobile .sf-timeline__dot { top: 7px; }

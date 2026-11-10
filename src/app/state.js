@@ -15,6 +15,7 @@ module.exports = function createAppState({ db, config, input, session }) {
     layout: normLayout(input.layout || ui.layout || config.layout),
     fullWidth: !!(input.fullWidth ?? ui.fullWidth ?? config.fullWidth),
     openInNewTab: !!(input.openInNewTab ?? ui.openInNewTab ?? config.openInNewTab),
+    popupView: !!(input.popupView ?? ui.popupView ?? config.popupView),
     theme: input.theme || ui.theme || config.theme,
     viewMode: input.viewMode || ui.viewMode || "auto",   // auto | mobile | desktop — принудительный вид
     insightsCount: Number(input.insightsCount ?? ui.insightsCount ?? config.insightsCount) || 3,
@@ -24,7 +25,7 @@ module.exports = function createAppState({ db, config, input, session }) {
   const restored = !!saved;
 
   store.subscribe((s) => session.patch({ state: s }));
-  store.subscribe((s) => { db.data.ui = { ...db.data.ui, layout: s.layout, fullWidth: s.fullWidth, openInNewTab: s.openInNewTab, theme: s.theme, insightsCount: s.insightsCount, viewMode: s.viewMode }; db.save(); }, ["layout", "fullWidth", "openInNewTab", "theme", "insightsCount", "viewMode"]);
+  store.subscribe((s) => { db.data.ui = { ...db.data.ui, layout: s.layout, fullWidth: s.fullWidth, openInNewTab: s.openInNewTab, popupView: s.popupView, theme: s.theme, insightsCount: s.insightsCount, viewMode: s.viewMode }; db.save(); }, ["layout", "fullWidth", "openInNewTab", "popupView", "theme", "insightsCount", "viewMode"]);
   session.patch({ state: store.get() });
   return { store, restored };
 };

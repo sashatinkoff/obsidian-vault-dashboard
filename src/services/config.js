@@ -15,7 +15,10 @@ const DEFAULTS = {
   // Кнопка «Новая заметка»: куда складывать. mode: root — в корень vault; folder — в папку `folder`; rule — по правилу `rule`
   // (папки и имя файла одной строкой; %%FOLDER_NAME — это `folder`; токены: YYYY, MM, MMMM (месяц словом), DD, D, hh, mm).
   // dateRule — как записать дату в frontmatter новой заметки (по умолчанию «16 октября 2026, 18:14»).
-  newNote: { mode: "folder", folder: "notes", rule: "%%FOLDER_NAME/YYYY/YYYY-MM-MMMM/YYYY-MM-DD-hh-mm", fileName: "YYYY-MM-DD-hh-mm", dateRule: "D MMMM YYYY, hh:mm", folderLang: "en", dateLang: "ru", open: true },
+  newNote: { mode: "folder", folder: "notes", rule: "%%FOLDER_NAME/YYYY/YYYY-MM-MMMM/YYYY-MM-DD hh-mm-ss", fileName: "YYYY-MM-DD hh-mm-ss", dateRule: "D MMMM YYYY, hh:mm", folderLang: "en", dateLang: "ru", open: true },
+  hideSidebar: "none",       // none | left | right | both — скрывать боковые панели Obsidian при открытии вкладки с лентой
+  restoreSidebar: true,       // возвращать скрытые панели при закрытии вкладки с лентой
+  popupView: false,           // true: клик по карточке открывает заметку в плавающем окне просмотра (не в редакторе); Ctrl/Cmd+клик — в редакторе
   theme: "auto",              // auto | dark | light
   fullWidth: true,            // true: растянуть блок и заметку на всю ширину окна (можно переключать кнопкой в навигации)
   nav: true,                  // верхняя навигация между экранами

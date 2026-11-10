@@ -5,7 +5,7 @@ const { icon } = require("lib/icons");
 const openModal = require("ui/common/modal");
 const { VERSION, RELEASED } = require("app/version");
 
-const KEYS = ["viewMode", "theme", "openInNewTab", "fullWidth"];
+const KEYS = ["viewMode", "theme", "openInNewTab", "popupView", "fullWidth"];
 
 module.exports = function openSettingsModal(ctx) {
   const modal = openModal(ctx, { title: "Настройки" });
@@ -21,7 +21,8 @@ module.exports = function openSettingsModal(ctx) {
     modal.body.append(
       section("Вид", pills([["auto", "Авто"], ["mobile", "Мобильный", "phone"], ["desktop", "Десктопный", "monitor"]], s.viewMode || "auto", (m) => ctx.actions.setViewModeTo(m))),
       section("Тема", pills([["auto", "Как в Obsidian"], ["light", "Светлая", "sun"], ["dark", "Тёмная", "moon"]], s.theme, (t) => ctx.actions.setTheme(t))),
-      section("Заметки", toggle("Открывать в новой вкладке", s.openInNewTab, () => ctx.actions.setOpenInNewTab(!s.openInNewTab), "newtab"),
+      section("Заметки", toggle("Плавающее окно просмотра", s.popupView, () => ctx.actions.setPopupView(!s.popupView), "eye"),
+        toggle("Открывать в новой вкладке", s.openInNewTab, () => ctx.actions.setOpenInNewTab(!s.openInNewTab), "newtab"),
         toggle("Страница на всю ширину", s.fullWidth, () => ctx.actions.setFullWidth(!s.fullWidth), "expand")),
       section("О виджете", h("a", { class: "sf-setrow", href: "#", onClick: (e) => { e.preventDefault(); modal.close(); ctx.openChangelog(); } },
         icon("file", { size: 16 }), h("span", { class: "sf-setrow__label" }, `Journal Stream v${VERSION}`), h("span", { class: "sf-setrow__state" }, `${RELEASED} · что нового`))));

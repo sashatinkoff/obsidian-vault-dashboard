@@ -9,7 +9,7 @@ const { plural } = require("lib/ru");
 module.exports = function richLink(ctx, post, { excerpt } = {}) {
   const t = types.get(post.type);
   const meta = [fmtDateTime(post.ts, post.hasTime)];
-  if (post.backlinks) meta.push(`${post.backlinks} ${plural(post.backlinks, ["связь", "связи", "связей"])}`);
+  if (post.backlinks && !ctx.store.get().popupView) meta.push(`${post.backlinks} ${plural(post.backlinks, ["связь", "связи", "связей"])}`);
   const ex = h("span", { class: "sf-richlink__excerpt" }, excerpt || "");
   const el = h("a", { class: ["sf-richlink", `sf-richlink--${t.id}`], href: "#", "data-href": post.path, onClick: (e) => { e.preventDefault(); e.stopPropagation(); ctx.openNote(post.path, e); } },
     h("span", { class: "sf-richlink__icon" }, icon(t.icon, { size: 16 })),

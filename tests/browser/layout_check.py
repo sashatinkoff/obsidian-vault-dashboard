@@ -57,7 +57,7 @@ MODAL_PROBE = """() => {
 def run(shots=False):
     page_path = build_page(); url = "file://" + str(page_path)
     widths = [360, 390, 430, 600, 768, 820, 1024, 1440]
-    views = [("overview", ""), ("stream", ""), ("stream", "&layout=timeline"), ("bento", ""), ("collections", ""), ("studio", "")]
+    views = [("overview", ""), ("stream", ""), ("stream", "&layout=timeline"), ("bento", ""), ("collections", ""), ("stats", ""), ("studio", "")]
     problems = 0
     with sync_playwright() as p:
         b = p.chromium.launch()
@@ -97,6 +97,16 @@ def run(shots=False):
                     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
             ctx.close()
         b.close()
+    # Timeline: число столбцов карточек зависит от ширины (телефон < 560 — 1, планшет и выше — 2)
+    with sync_playwright() as pw:
+        br = pw.chromium.launch()
+        for w, want in ((360, 1), (430, 1), (540, 1), (600, 2), (768, 2), (820, 2), (1024, 2), (1440, 2)):
+            pg = br.new_page(viewport={"width": w, "height": 900}); pg.goto(f"{url}?view=stream&layout=timeline&nodata=1&id=tl{w}"); pg.wait_for_function("window.__ready"); pg.wait_for_timeout(400)
+            got = pg.evaluate("() => getComputedStyle(document.querySelector('.sf-timeline__items')).gridTemplateColumns.split(' ').length")
+            print(("ok   " if got == want else "FAIL ") + f"{w}px timeline: столбцов {got} (ожидалось {want})")
+            if got != want: problems += 1
+            pg.close()
+        br.close()
     if shots: make_shots(url)
     print("\nПроблем с раскладкой:", problems)
     return problems

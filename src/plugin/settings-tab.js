@@ -37,9 +37,9 @@ class JournalStreamSettingTab extends PluginSettingTab {
     const nn = s.newNote;
     drop2("Куда складывать", "Корень vault, одна папка или правило с датой.", () => nn.mode, (v) => { nn.mode = v; }, [["root", "В корень vault"], ["folder", "В папку"], ["rule", "По правилу"]], true);
     text("Папка", "Для режима «В папку» и для %%FOLDER_NAME в правиле. Например: notes", () => nn.folder, (v) => { nn.folder = v.trim().replace(/^\/+|\/+$/g, ""); });
-    text("Правило", "Папки и имя файла одной строкой. %%FOLDER_NAME — папка из поля выше; YYYY год, MM месяц числом, MMMM месяц словом, DD день, hh часы, mm минуты.", () => nn.rule, (v) => { nn.rule = v.trim(); }, { placeholder: "%%FOLDER_NAME/YYYY/YYYY-MM-MMMM/YYYY-MM-DD-hh-mm" });
+    text("Правило", "Папки и имя файла одной строкой. %%FOLDER_NAME — папка из поля выше; YYYY год, MM месяц числом, MMMM месяц словом, DD день, hh часы, mm минуты, ss секунды.", () => nn.rule, (v) => { nn.rule = v.trim(); }, { placeholder: "%%FOLDER_NAME/YYYY/YYYY-MM-MMMM/YYYY-MM-DD hh-mm-ss" });
     drop2("Месяц в названиях папок", "Язык токена MMMM в пути: English → 2026-10-October, Русский → 2026-10-Октябрь.", () => nn.folderLang || "en", (v) => { nn.folderLang = v; }, [["en", "English (October)"], ["ru", "Русский (Октябрь)"]]);
-    text("Имя файла", "Для режимов «В корень» и «В папку».", () => nn.fileName, (v) => { nn.fileName = v.trim() || "YYYY-MM-DD-hh-mm"; });
+    text("Имя файла", "Для режимов «В корень» и «В папку».", () => nn.fileName, (v) => { nn.fileName = v.trim() || "YYYY-MM-DD hh-mm-ss"; });
     text("Дата в заметке", "Как записать дату во frontmatter (поле из «Полей даты»). Токены: YYYY, MM, MMMM (месяц словом; после «D » — «октября»), DD и D (день), hh, mm. По умолчанию: D MMMM YYYY, hh:mm", () => nn.dateRule, (v) => { nn.dateRule = v.trim() || "D MMMM YYYY, hh:mm"; }, { placeholder: "D MMMM YYYY, hh:mm" });
     drop2("Месяц в дате заметки", "Язык токена MMMM в дате: Русский → 16 октября 2026, English → 16 October 2026.", () => nn.dateLang || "ru", (v) => { nn.dateLang = v; }, [["ru", "Русский (октября)"], ["en", "English (October)"]]);
     this.example = new Setting(el).setName("Пример").setDesc(exampleText(nn));
@@ -49,6 +49,9 @@ class JournalStreamSettingTab extends PluginSettingTab {
     drop("Раздел по умолчанию", "С какого экрана открывается лента.", "defaultView", [["overview", "Обзор"], ["stream", "Лента"], ["bento", "Бенто"], ["collections", "Подборки"], ["studio", "Конструктор"]]);
     drop("Тема", "«Как в Obsidian» — следовать теме приложения.", "theme", [["auto", "Как в Obsidian"], ["light", "Светлая"], ["dark", "Тёмная"]]);
     toggle("На всю ширину", "Растянуть ленту на всю ширину заметки/вкладки.", "fullWidth");
+    drop("Скрывать боковую панель", "При открытии вкладки с лентой (не код-блока) сворачивать боковые панели Obsidian — больше места для карточек.", "hideSidebar", [["none", "Не скрывать"], ["left", "Левую"], ["right", "Правую"], ["both", "Обе"]]);
+    toggle("Возвращать панель при закрытии", "Раскрыть скрытые панели обратно, когда вкладка с лентой закрыта.", "restoreSidebar");
+    toggle("Открывать заметки в плавающем окне", "Клик по карточке показывает заметку в окне просмотра (не в редакторе); на карточках скрыты ссылки вперёд/назад (бэклинки). Ctrl/Cmd+клик — открыть в редакторе. Кнопка-глаз в шапке ленты переключает режим на лету.", "popupView");
     toggle("Открывать заметки в новой вкладке", "Иначе — в текущей (Ctrl/Cmd+клик всегда в новой).", "openInNewTab");
     num("Колонок минимум", "На десктопе (1–6).", () => s.columns.min, (n) => { s.columns.min = n; if (s.columns.max < n) s.columns.max = n; }, 1, 6);
     num("Колонок максимум", "На десктопе (1–8).", () => s.columns.max, (n) => { s.columns.max = Math.max(n, s.columns.min); }, 1, 8);
